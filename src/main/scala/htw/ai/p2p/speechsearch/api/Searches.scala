@@ -7,9 +7,6 @@ import io.circe.{Decoder, Encoder}
 import org.http4s.circe.{jsonEncoderOf, jsonOf}
 import org.http4s.{EntityDecoder, EntityEncoder}
 
-/**
-  * @author Joscha Seelig <jduesentrieb> 2021
-**/
 trait Searches[F[_]] {
   def create(search: Search): F[Either[SearchError, SearchResult]]
 }
