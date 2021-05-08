@@ -1,0 +1,125 @@
+openapi: 3.1.0
+info:
+  title: Bundestags-Speech-Search
+  version: '1.0'
+  description: This API provides access to the functionality of the full-text search engine. The provided functionality is the search for terms in indexed documents and the indexing of documents themselves.
+  contact:
+    name: Joscha Seelig
+    email: s0566845@htw-berlin.de
+servers:
+  - url: 'http://localhost:3000'
+tags:
+  - name: index
+  - name: search
+paths:
+  /searches:
+    post:
+      summary: Search speeches
+      operationId: post-search
+      responses:
+        '200':
+          $ref: '#/components/responses/SearchResult'
+        '400':
+          description: Bad Request
+      description: Retrieve the most relevant documents for the given search query.
+  /indexes:
+    post:
+      summary: Index the speeches
+      operationId: post-speech
+      responses:
+        '201'
+        '400':
+          description: Bad Request
+      description: Include a speech to the inverted index.
+      requestBody:
+        $ref: '#/components/schemas/Speech'
+
+components:
+  schemas:
+    Search:
+      title: Query
+      type: object
+      description: This entity is an abstraction over a query for searching the indexed documents
+      example:
+        Simple query:
+          query: corona AND lockdown OR test
+      properties:
+        query:
+          type: string
+    Speech:
+      description: This entity contains all relevant information related to a single speech
+      type: object
+      x-examples:
+        example:
+          id: uuid
+          title: string
+          speaker: string
+          affiliation: string
+          date: 'Date in ISO 8601-1:2019 String Format'
+          text: string
+      x-internal: false
+      properties:
+        id:
+          type: string
+          minLength: 1
+          description: docId as uuid
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+        speaker:
+          type: string
+          minLength: 1
+        affiliation:
+          type: string
+          minLength: 1
+          description: affiliation the speaker belongs to
+        date:
+          type: string
+          minLength: 1
+          description: 'date at which the speech was given in ISO 8601-1:2019 format'
+          format: date
+        text:
+          type: string
+          minLength: 1
+      required:
+        - id
+        - title
+        - speaker
+        - affiliation
+        - date
+        - text
+  responses:
+    SearchResult:
+      description: Representation of a result for a specific search query.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              query:
+                type: array
+                items: { }
+              findings:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    docId:
+                      type: string
+                      format: uuid
+                    relevance:
+                      type: number
+                    positions:
+                      type: array
+                      items:
+                        type: integer
+                    title:
+                      type: string
+                    speaker:
+                      type: string
+                    affiliation:
+                      type: string
+                    date:
+                      type: string
+                      format: date
