@@ -1,7 +1,7 @@
-package htw.ai.p2p.speechsearch
+package htw.ai.p2p.speechsearch.api
 
 import cats.effect.IO
-import htw.ai.p2p.speechsearch.api.Searches
+import htw.ai.p2p.speechsearch.SpeechSearchRoutes
 import htw.ai.p2p.speechsearch.api.Searches.{Search, SearchResult}
 import io.circe.syntax._
 import munit.CatsEffectSuite
