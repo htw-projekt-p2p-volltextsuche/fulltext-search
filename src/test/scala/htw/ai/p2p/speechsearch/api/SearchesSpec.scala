@@ -9,6 +9,9 @@ import org.http4s._
 import org.http4s.circe.jsonEncoder
 import org.http4s.implicits._
 
+/**
+@author Joscha Seelig <jduesentrieb> 2021
+ **/
 class SearchesSpec extends CatsEffectSuite {
 
   test("Search returns status code 200") {

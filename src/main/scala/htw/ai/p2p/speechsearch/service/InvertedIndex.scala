@@ -17,9 +17,11 @@ import htw.ai.p2p.speechsearch.model.Posting
   * There are two types of methods defined for accessing the
   * inverted index. One for the addition and removal
   * of single terms with their associated postings and another
-  * one for supplying and retrieving batches of term-postings
+  * one for supplying and retrieving batches of term-posting
   * pairs. The batch methods should be utilized to improve
   * the performance if possible.
+  *
+  * @author Joscha Seelig <jduesentrieb> 2021
   */
 trait InvertedIndex {
 
@@ -41,37 +43,35 @@ trait InvertedIndex {
   /**
     * Alias for `insert`.
     */
-  def :+(entry: (Term, PostingList)): InvertedIndex =
-    entry match {
-      case (term, postings) => insert(term, postings)
-    }
+  def :+(entry: (Term, Posting)): InvertedIndex =
+    insert(entry._1, entry._2)
 
   /**
     * Alias for `insertAll`
     */
-  def :++(entries: Map[Term, PostingList]): InvertedIndex =
+  def :++(entries: Map[Term, Posting]): InvertedIndex =
     insertAll(entries)
 
   /**
-    * Stores a `List` of postings in a new `InvertedIndex`
-    * by mapping them to the specified term as key.
-    * The given postings will be appended to the present
+    * Adds a Posting into a new `InvertedIndex`
+    * by mapping it to the specified term as key.
+    * The given posting will be appended to the available
     * postings if the given term is already present.
     *
-    * @param term The term too which the postings will
+    * @param term The term to which the posting will
     *             be appended to.
-    * @param postings The postings that are to be stored
+    * @param posting The posting that is to be stored
     *                 in the inverted index.
     *
     * @return A new inverted index updated with the given
-    *         postings.
+    *         term-posting-pair.
     */
-  def insert(term: Term, postings: PostingList): InvertedIndex
+  def insert(term: Term, posting: Posting): InvertedIndex
 
   /**
-    * Stores all specified postings to the mapped term in
-    * one batch in a new `InvertedIndex`.
-    * Just as for `insert` the postings will be appended
+    * Adds all specified postings to the associated term
+    * in one batch into a new `InvertedIndex`.
+    * Just as for `insert` each posting will be appended
     * to an already present `List` of postings if the term
     * is already known.
     *
@@ -79,13 +79,13 @@ trait InvertedIndex {
     * by utilizing the fact that this method handles a batch
     * of items.
     *
-    * @param entries A `Map` containing the postings mapped
-    *                to the keys at which they are to be
-    *                stored.
+    * @param entries A `Map` containing postings mapped
+    *                to a term to which they are associated.
+    *
     * @return A new inverted index updated with the given
     *         postings.
     */
-  def insertAll(entries: Map[Term, PostingList]): InvertedIndex
+  def insertAll(entries: Map[Term, Posting]): InvertedIndex
 
   /**
     * Returns an `Option` containing a `List` of postings that

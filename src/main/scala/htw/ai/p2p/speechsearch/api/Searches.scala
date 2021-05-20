@@ -7,6 +7,9 @@ import io.circe.{Decoder, Encoder}
 import org.http4s.circe.{jsonEncoderOf, jsonOf}
 import org.http4s.{EntityDecoder, EntityEncoder}
 
+/**
+@author Joscha Seelig <jduesentrieb> 2021
+ **/
 trait Searches[F[_]] {
   def create(search: Search): F[Either[SearchError, SearchResult]]
 }
@@ -14,6 +17,7 @@ trait Searches[F[_]] {
 object Searches {
   def apply[F[_]](implicit ev: Searches[F]): Searches[F] = ev
 
+  //noinspection ConvertExpressionToSAM
   def impl[F[_]: Sync]: Searches[F] =
     new Searches[F] {
       override def create(
@@ -25,6 +29,7 @@ object Searches {
     }
 
   final case class Search(query: String)
+
   object Search {
     implicit val encoder: Encoder[Search] = deriveEncoder
     implicit def entityEncoder[F[_]: Sync]: EntityEncoder[F, Search] =
@@ -35,6 +40,7 @@ object Searches {
   }
 
   final case class SearchResult(postings: List[String])
+
   object SearchResult {
     implicit val encoder: Encoder[SearchResult] = deriveEncoder
     implicit def entityEncoder[F[_]: Sync]: EntityEncoder[F, SearchResult] =
@@ -45,6 +51,7 @@ object Searches {
   }
 
   sealed trait SearchError
+
   final case class UnknownError(search: Search, message: String)
       extends SearchError
 
