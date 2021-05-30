@@ -77,8 +77,9 @@ components:
         date:
           type: string
           minLength: 1
-          description: 'date at which the speech was given in ISO 8601-1:2019 format'
+          description: 'date at which the speech was given'
           format: date
+          example: 2021-21-12
         text:
           type: string
           minLength: 1

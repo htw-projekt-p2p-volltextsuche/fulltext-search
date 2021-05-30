@@ -1,4 +1,4 @@
-package htw.ai.p2p.speechsearch.service
+package htw.ai.p2p.speechsearch.domain
 
 import htw.ai.p2p.speechsearch.BaseShouldSpec
 
@@ -14,23 +14,13 @@ class TokenizerSpec extends BaseShouldSpec {
       "Unternehmens-Informationssystem, womit alle geschäftsrelevanten " +
       "Bereiche eines Unternehmens im Zusammenhang betrachtet werden können."
 
-    val tokens = tokenizer tokenize text
+    val tokens = tokenizer apply text
 
     tokens should have size 17
     tokens should contain allOf (
       "enterprise-resource-planning",
       "unternehmens-informationssystem"
     )
-  }
-
-  ignore should "remove hyphen with linebreak from a wrapped word" in {
-    val text = """This text con-
-        |tains a wrapped word.""".stripMargin
-
-    val tokens = tokenizer tokenize text
-
-    tokens should have size 6
-    tokens should contain("contains")
   }
 
 }

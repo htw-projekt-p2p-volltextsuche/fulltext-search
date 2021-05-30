@@ -1,10 +1,14 @@
-package htw.ai.p2p.speechsearch.service
+package htw.ai.p2p.speechsearch.domain
 
-import htw.ai.p2p.speechsearch.model.Posting
+import htw.ai.p2p.speechsearch.domain.model.Posting
 
 /**
   * @author Joscha Seelig <jduesentrieb> 2021
  **/
+object LocalInvertedIndex {
+  def apply(): InvertedIndex = new LocalInvertedIndex()
+}
+
 class LocalInvertedIndex private (
     store: Map[String, List[Posting]] = Map()
 ) extends InvertedIndex {
@@ -19,7 +23,7 @@ class LocalInvertedIndex private (
       }
     )
 
-  override def get(term: Term): Option[PostingList] = store get term
+  override def get(term: Term): PostingList = store getOrElse (term, List.empty)
 
   override def getAll(terms: List[Term]): Map[Term, PostingList] =
     terms.map(term => term -> store.getOrElse(term, Nil)).toMap
@@ -29,8 +33,6 @@ class LocalInvertedIndex private (
       entry: (Term, Posting)
   ): Map[Term, PostingList] =
     map + (entry._1 -> (entry._2 :: store.getOrElse(entry._1, List.empty)))
-}
 
-object LocalInvertedIndex {
-  def apply(): InvertedIndex = new LocalInvertedIndex()
+  override def size: Int = store.size
 }

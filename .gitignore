@@ -41,3 +41,4 @@ build
 #general
 *.class
 
+src/test/scala/htw/ai/p2p/speechsearch/sandbox.sc

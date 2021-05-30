@@ -1,7 +1,7 @@
-package htw.ai.p2p.speechsearch.service
+package htw.ai.p2p.speechsearch.domain
 
 import htw.ai.p2p.speechsearch.BaseShouldSpec
-import htw.ai.p2p.speechsearch.model.{DocId, Posting}
+import htw.ai.p2p.speechsearch.domain.model.{DocId, Posting}
 
 /**
 @author Joscha Seelig <jduesentrieb> 2021
@@ -14,8 +14,7 @@ class LocalInvertedIndexSpec extends BaseShouldSpec {
     val index = LocalInvertedIndex().insert("test", posting)
 
     val result = index.get("test")
-    assert(result.isDefined)
-    assert(result.get.contains(posting), s"$result does not contain $posting")
+    assert(result.contains(posting), s"$result does not contain $posting")
   }
 
   it should "also insert with infix alias" in {
@@ -24,8 +23,7 @@ class LocalInvertedIndexSpec extends BaseShouldSpec {
     val index: InvertedIndex = LocalInvertedIndex() :+ ("test" -> posting)
 
     val result = index.get("test")
-    assert(result.isDefined)
-    assert(result.get.contains(posting), s"$result does not contain $posting")
+    assert(result.contains(posting), s"$result does not contain $posting")
   }
 
   it should "also get with apply alias" in {
@@ -34,8 +32,7 @@ class LocalInvertedIndexSpec extends BaseShouldSpec {
 
     val result = index("test")
 
-    assert(result.isDefined)
-    assert(result.get.contains(posting), s"$result does not contain $posting")
+    assert(result.contains(posting), s"$result does not contain $posting")
   }
 
   it should "append posting when term is already present" in {
@@ -46,15 +43,13 @@ class LocalInvertedIndexSpec extends BaseShouldSpec {
     val newIndex = index.insert("test", newPosting)
 
     val result = newIndex.get("test")
-    assert(result.isDefined)
     assert(
-      result.get.contains(newPosting),
-      s"${result.get} does not contain $newPosting"
+      result.contains(newPosting),
+      s"${result} does not contain $newPosting"
     )
-    assert(result.isDefined)
     assert(
-      result.get.contains(knownPosting),
-      s"${result.get} does not contain $knownPosting"
+      result.contains(knownPosting),
+      s"${result} does not contain $knownPosting"
     )
   }
 
@@ -66,8 +61,8 @@ class LocalInvertedIndexSpec extends BaseShouldSpec {
 
     val index = LocalInvertedIndex().insertAll(mappedPostings)
 
-    assert(index("term 1").get.contains(mappedPostings("term 1")))
-    assert(index("term 2").get.contains(mappedPostings("term 2")))
+    assert(index("term 1").contains(mappedPostings("term 1")))
+    assert(index("term 2").contains(mappedPostings("term 2")))
   }
 
   it should "append all postings when terms are already present" in {
@@ -82,14 +77,13 @@ class LocalInvertedIndexSpec extends BaseShouldSpec {
     val newIndex = index.insertAll(newPostings)
 
     val result = newIndex("term 1")
-    assert(result.isDefined)
     assert(
-      result.get.contains(newPosting),
-      s"${result.get} does not contain $newPosting"
+      result.contains(newPosting),
+      s"${result} does not contain $newPosting"
     )
     assert(
-      result.get.contains(knownPosting),
-      s"${result.get} does not contain $knownPosting"
+      result.contains(knownPosting),
+      s"${result} does not contain $knownPosting"
     )
   }
 
@@ -101,8 +95,8 @@ class LocalInvertedIndexSpec extends BaseShouldSpec {
 
     val index = LocalInvertedIndex() :++ postings
 
-    assert(index("term 1").isDefined)
-    assert(index("term 2").isDefined)
+    assert(index("term 1").nonEmpty)
+    assert(index("term 2").nonEmpty)
   }
 
   it should "return a map with all terms and their associated postings" in {

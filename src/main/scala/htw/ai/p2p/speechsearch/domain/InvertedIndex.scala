@@ -1,6 +1,6 @@
-package htw.ai.p2p.speechsearch.service
+package htw.ai.p2p.speechsearch.domain
 
-import htw.ai.p2p.speechsearch.model.Posting
+import htw.ai.p2p.speechsearch.domain.model.Posting
 
 /**
   * Interface for the encapsulation of an inverted index.
@@ -38,7 +38,7 @@ trait InvertedIndex {
   /**
     * Alias for ´get´.
     */
-  def apply(term: Term): Option[PostingList] = get(term)
+  def apply(term: Term): PostingList = get(term)
 
   /**
     * Alias for `insert`.
@@ -51,6 +51,11 @@ trait InvertedIndex {
     */
   def :++(entries: Map[Term, Posting]): InvertedIndex =
     insertAll(entries)
+
+  /**
+    * Returns the amount of actually indexed documents.
+    */
+  def size: Int
 
   /**
     * Adds a Posting into a new `InvertedIndex`
@@ -88,17 +93,17 @@ trait InvertedIndex {
   def insertAll(entries: Map[Term, Posting]): InvertedIndex
 
   /**
-    * Returns an `Option` containing a `List` of postings that
-    * are mapped to the specified term or an empty `Option`
-    * if the key is not present.
+    * Returns a `List` containing the postings associated
+    * to the specified term or an empty `List` if the key
+    * is not present.
     *
     * @param term The term for which the postings are to
     *             be retrieved.
     *
-    * @return An `Option` containing the requested postings
+    * @return A `List` containing the requested postings
     *         or an empty one if the term is not present.
     */
-  def get(term: Term): Option[PostingList]
+  def get(term: Term): PostingList
 
   /**
     * Retrieves all postings that are stored at the given

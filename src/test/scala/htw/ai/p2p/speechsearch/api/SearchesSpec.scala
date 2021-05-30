@@ -1,11 +1,17 @@
 package htw.ai.p2p.speechsearch.api
 
 import cats.effect.IO
-import htw.ai.p2p.speechsearch.SpeechSearchRoutes
-import htw.ai.p2p.speechsearch.api.Searches.{Search, SearchResult}
-import io.circe.syntax._
+import cats.effect.concurrent.Ref
+import htw.ai.p2p.speechsearch.api.routes.SearchRoutes
+import htw.ai.p2p.speechsearch.api.service.Searches
+import htw.ai.p2p.speechsearch.api.service.Searches.Search
+import htw.ai.p2p.speechsearch.domain.{Index, LocalInvertedIndex, Tokenizer}
+import htw.ai.p2p.speechsearch.domain.model.SearchResult
+import io.circe.generic.auto._
+import io.circe.syntax.EncoderOps
 import munit.CatsEffectSuite
 import org.http4s._
+import org.http4s.circe.CirceEntityCodec._
 import org.http4s.circe.jsonEncoder
 import org.http4s.implicits._
 
@@ -24,12 +30,14 @@ class SearchesSpec extends CatsEffectSuite {
 
   test("Search returns SearchResult") {
     val searchResult = searchQuery(Search(query = "test")).as[SearchResult]
-    assertIO(searchResult.map(_.postings), Nil)
+    assertIO(searchResult.map(_.results), Nil) // TODO
   }
 
   val server: HttpApp[IO] = {
-    val searches = Searches.impl[IO]
-    SpeechSearchRoutes.searchRoutes(searches).orNotFound
+    val index = Index(Tokenizer(), LocalInvertedIndex())
+    val indexRef = Ref[IO].of(index).unsafeRunSync
+    val searches = Searches.impl[IO](indexRef)
+    new SearchRoutes(searches).routes.orNotFound
   }
 
   private[this] def searchQuery(search: Search): Response[IO] = {
