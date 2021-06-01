@@ -4,15 +4,15 @@ package htw.ai.p2p.speechsearch.domain.model
   * @author Joscha Seelig <jduesentrieb> 2021
 **/
 case class SearchQuery(
-    maxResults: Int,
-    target: String,
+    maxResults: Int = 25,
+    target: QueryTarget = FullText,
     terms: String,
     extensions: List[QueryExtension]
 )
 
 case class QueryExtension(
-    connector: QueryConnector,
-    target: String,
+    connector: QueryConnector = Or,
+    target: QueryTarget = FullText,
     terms: String
 )
 
