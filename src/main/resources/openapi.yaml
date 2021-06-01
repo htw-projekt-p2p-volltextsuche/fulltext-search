@@ -66,14 +66,14 @@ components:
         query:
           type: object
           required:
-            - type
+            - target
             - terms
             - extensions
           properties:
             max_results:
               default: 25
               type: integer
-            type:
+            target:
               type: string
               minLength: 1
               enum:
@@ -99,7 +99,7 @@ components:
                       - and
                       - and_not
                     default: or
-                  type:
+                  target:
                     type: string
                     minLength: 1
                     enum:
@@ -112,7 +112,7 @@ components:
                     minLength: 1
                 required:
                   - connector
-                  - type
+                  - target
                   - terms
       required:
         - query
