@@ -1,19 +1,20 @@
 openapi: 3.1.0
 info:
-  title: Bundestags-Speech-Search
+  title: p2p-search-engine
   version: '1.0'
+  summary: Bundestags-speeches search API
   description: This API provides access to the functionality of the full-text search engine. The provided functionality is the search for terms in indexed documents and the indexing of documents themselves.
   contact:
     name: Joscha Seelig
     email: s0566845@htw-berlin.de
 servers:
   - url: 'http://localhost:3000'
-tags:
-  - name: index
-  - name: search
 paths:
   /searches:
+    parameters: []
     post:
+      tags:
+        - search
       summary: Search speeches
       operationId: post-search
       responses:
@@ -22,42 +23,110 @@ paths:
         '400':
           description: Bad Request
       description: Retrieve the most relevant documents for the given search query.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Query'
   /indexes:
     post:
+      tags:
+        - index
       summary: Index the speeches
       operationId: post-speech
       responses:
-        '201'
+        '200':
+          description: OK
         '400':
           description: Bad Request
       description: Include a speech to the inverted index.
+      parameters: []
       requestBody:
-        $ref: '#/components/schemas/Speech'
-
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Speech'
+    parameters: []
 components:
   schemas:
-    Search:
-      title: Query
-      type: object
+    Query:
       description: This entity is an abstraction over a query for searching the indexed documents
-      example:
-        Simple query:
-          query: corona AND lockdown OR test
+      type: object
+      x-examples:
+        example:
+          query:
+            max_results: 25
+            type: full_text
+            terms: Corona Regeln Juni
+            extensions:
+              - connector: and
+                type: affiliation
+                terms: cdu
       properties:
         query:
-          type: string
+          type: object
+          required:
+            - type
+            - terms
+            - extensions
+          properties:
+            max_results:
+              default: 25
+              type: integer
+            type:
+              type: string
+              minLength: 1
+              enum:
+                - full_text
+                - affiliation
+                - speaker
+              default: full_text
+            terms:
+              type: string
+              minLength: 1
+            extensions:
+              type: array
+              uniqueItems: true
+              minItems: 1
+              items:
+                type: object
+                properties:
+                  connector:
+                    type: string
+                    minLength: 1
+                    enum:
+                      - or
+                      - and
+                      - and_not
+                    default: or
+                  type:
+                    type: string
+                    minLength: 1
+                    enum:
+                      - full_text
+                      - affiliation
+                      - speaker
+                    default: full_text
+                  terms:
+                    type: string
+                    minLength: 1
+                required:
+                  - connector
+                  - type
+                  - terms
+      required:
+        - query
     Speech:
       description: This entity contains all relevant information related to a single speech
       type: object
       x-examples:
         example:
-          id: uuid
-          title: string
-          speaker: string
-          affiliation: string
-          date: 'Date in ISO 8601-1:2019 String Format'
-          text: string
-      x-internal: false
+          id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+          title: Super interesting speech
+          speaker: someone
+          affiliation: somegroup
+          date: '2019-08-24'
+          text: blah blah blah...
       properties:
         id:
           type: string
@@ -77,9 +146,8 @@ components:
         date:
           type: string
           minLength: 1
-          description: 'date at which the speech was given'
+          description: 'date at which the speech was given in ISO 8601-1:2019 format'
           format: date
-          example: 2021-21-12
         text:
           type: string
           minLength: 1
@@ -96,31 +164,49 @@ components:
       content:
         application/json:
           schema:
+            description: ''
             type: object
+            x-examples:
+              example-1:
+                total: 12312
+                results:
+                  - docId: 5b1b4727-0bb6-49d6-b8f2-401561fc8ebc
+                    score: 0.6782134
+                    positions:
+                      - 76
+                      - 123
+                      - 612
             properties:
-              query:
+              total:
+                type: integer
+                description: Indicates the total amount of results.
+              results:
                 type: array
-                items: { }
-              findings:
-                type: array
+                uniqueItems: true
+                minItems: 1
                 items:
                   type: object
                   properties:
                     docId:
                       type: string
+                      minLength: 1
                       format: uuid
-                    relevance:
+                    score:
                       type: number
+                      format: double
+                      minimum: 0
                     positions:
                       type: array
+                      uniqueItems: true
                       items:
                         type: integer
-                    title:
-                      type: string
-                    speaker:
-                      type: string
-                    affiliation:
-                      type: string
-                    date:
-                      type: string
-                      format: date
+                        minimum: 0
+                  required:
+                    - docId
+                    - score
+            required:
+              - total
+              - results
+tags:
+  - name: index
+  - name: search
