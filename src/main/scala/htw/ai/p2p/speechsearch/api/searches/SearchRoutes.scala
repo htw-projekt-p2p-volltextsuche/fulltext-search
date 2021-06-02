@@ -1,9 +1,8 @@
-package htw.ai.p2p.speechsearch.api.routes
+package htw.ai.p2p.speechsearch.api.searches
 
 import cats.effect.Sync
 import cats.implicits._
-import htw.ai.p2p.speechsearch.api.service.Searches
-import htw.ai.p2p.speechsearch.api.service.Searches.Search
+import htw.ai.p2p.speechsearch.api.searches.Searches.QueryData
 import io.circe.generic.auto._
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec._
@@ -17,7 +16,7 @@ class SearchRoutes[F[_]: Sync](searches: Searches[F]) extends Http4sDsl[F] {
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
     case req @ POST -> Root / "searches" =>
       for {
-        search <- req.as[Search]
+        search <- req.as[QueryData]
         result <- searches.create(search)
         resp <- result match {
           case Left(error)         => BadRequest(error)

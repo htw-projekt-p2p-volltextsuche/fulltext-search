@@ -6,7 +6,7 @@ import java.time.LocalDate
   * @author Joscha Seelig <jduesentrieb> 2021
  **/
 case class Speech(
-    docId: String,
+    docId: DocId,
     title: String,
     speaker: String,
     affiliation: String,

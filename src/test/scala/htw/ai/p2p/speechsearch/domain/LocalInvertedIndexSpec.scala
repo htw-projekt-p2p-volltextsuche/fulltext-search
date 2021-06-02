@@ -1,6 +1,7 @@
 package htw.ai.p2p.speechsearch.domain
 
 import htw.ai.p2p.speechsearch.BaseShouldSpec
+import htw.ai.p2p.speechsearch.domain.invertedindex.{InvertedIndex, LocalInvertedIndex}
 import htw.ai.p2p.speechsearch.domain.model.{DocId, Posting}
 
 /**
@@ -45,11 +46,11 @@ class LocalInvertedIndexSpec extends BaseShouldSpec {
     val result = newIndex.get("test")
     assert(
       result.contains(newPosting),
-      s"${result} does not contain $newPosting"
+      s"$result does not contain $newPosting"
     )
     assert(
       result.contains(knownPosting),
-      s"${result} does not contain $knownPosting"
+      s"$result does not contain $knownPosting"
     )
   }
 
@@ -79,11 +80,11 @@ class LocalInvertedIndexSpec extends BaseShouldSpec {
     val result = newIndex("term 1")
     assert(
       result.contains(newPosting),
-      s"${result} does not contain $newPosting"
+      s"$result does not contain $newPosting"
     )
     assert(
       result.contains(knownPosting),
-      s"${result} does not contain $knownPosting"
+      s"$result does not contain $knownPosting"
     )
   }
 

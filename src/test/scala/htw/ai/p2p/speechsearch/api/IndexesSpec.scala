@@ -3,10 +3,10 @@ package htw.ai.p2p.speechsearch.api
 import cats.effect.IO
 import cats.effect.concurrent.Ref
 import htw.ai.p2p.speechsearch.TestUtils.readSpeechFromFile
-import htw.ai.p2p.speechsearch.api.routes.IndexRoutes
-import htw.ai.p2p.speechsearch.api.service.Indexes
+import htw.ai.p2p.speechsearch.api.indexes.{IndexRoutes, Indexes}
+import htw.ai.p2p.speechsearch.domain.invertedindex.LocalInvertedIndex
 import htw.ai.p2p.speechsearch.domain.model.Speech
-import htw.ai.p2p.speechsearch.domain.{Index, LocalInvertedIndex, Tokenizer}
+import htw.ai.p2p.speechsearch.domain.{Index, Tokenizer}
 import io.circe.generic.auto._
 import io.circe.syntax.EncoderOps
 import munit.CatsEffectSuite

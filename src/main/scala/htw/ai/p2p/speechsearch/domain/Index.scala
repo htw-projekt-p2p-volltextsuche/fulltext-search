@@ -1,5 +1,6 @@
 package htw.ai.p2p.speechsearch.domain
 
+import htw.ai.p2p.speechsearch.domain.invertedindex.{InvertedIndex, LocalInvertedIndex}
 import htw.ai.p2p.speechsearch.domain.model.{Posting, Speech}
 
 /**

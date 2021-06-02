@@ -5,21 +5,21 @@ package htw.ai.p2p.speechsearch.domain.model
 **/
 case class SearchQuery(
     maxResults: Int = 25,
-    target: QueryTarget = FullText,
+    searchType: SearchType = FullText,
     terms: String,
-    extensions: List[QueryExtension]
+    extensions: List[QueryExtension] = Nil
 )
 
 case class QueryExtension(
     connector: QueryConnector = Or,
-    target: QueryTarget = FullText,
+    searchType: SearchType = FullText,
     terms: String
 )
 
-sealed trait QueryTarget
-case object FullText extends QueryTarget
-case object Affiliation extends QueryTarget
-case object Speaker extends QueryTarget
+sealed trait SearchType
+case object FullText extends SearchType
+case object Affiliation extends SearchType
+case object Speaker extends SearchType
 
 sealed trait QueryConnector
 case object Or extends QueryConnector

@@ -1,4 +1,4 @@
-package htw.ai.p2p.speechsearch.domain
+package htw.ai.p2p.speechsearch.domain.invertedindex
 
 import htw.ai.p2p.speechsearch.domain.model.Posting
 

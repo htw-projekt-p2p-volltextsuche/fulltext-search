@@ -1,6 +1,6 @@
 package htw.ai.p2p.speechsearch.domain
 
-import htw.ai.p2p.speechsearch.domain.model.{ResultEntry, SearchResult}
+import htw.ai.p2p.speechsearch.domain.model.{ResultEntry, SearchQuery, SearchResult}
 
 /**
   * @author Joscha Seelig <jduesentrieb> 2021
@@ -8,9 +8,9 @@ import htw.ai.p2p.speechsearch.domain.model.{ResultEntry, SearchResult}
 class Searcher(index: Index) {
 
   // TODO: postings should be retrieved as batch
-  def search(query: String, topK: Int = 10): SearchResult = {
+  def search(query: SearchQuery, topK: Int = 10): SearchResult = {
     val postings = for {
-      term <- index.tokenizer(query)
+      term <- index.tokenizer(query.terms)
       posting <- index.postings(term)
     } yield posting.docId -> posting.tf * math.pow(idf(term).getOrElse(0), 2)
 
@@ -19,7 +19,7 @@ class Searcher(index: Index) {
       .toSeq
       .sortBy(-_._2)
       .take(topK)
-      .map { case (term, score) => ResultEntry(term, score) }
+      .map { case (doc, score) => ResultEntry(doc.id, score) }
 
     SearchResult(results)
   }

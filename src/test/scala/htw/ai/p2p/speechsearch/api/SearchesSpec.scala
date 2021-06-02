@@ -2,11 +2,11 @@ package htw.ai.p2p.speechsearch.api
 
 import cats.effect.IO
 import cats.effect.concurrent.Ref
-import htw.ai.p2p.speechsearch.api.routes.SearchRoutes
-import htw.ai.p2p.speechsearch.api.service.Searches
-import htw.ai.p2p.speechsearch.api.service.Searches.Search
-import htw.ai.p2p.speechsearch.domain.{Index, LocalInvertedIndex, Tokenizer}
+import htw.ai.p2p.speechsearch.api.searches.Searches.{QueryData, QueryExtensionData}
+import htw.ai.p2p.speechsearch.api.searches.{SearchRoutes, Searches}
+import htw.ai.p2p.speechsearch.domain.invertedindex.LocalInvertedIndex
 import htw.ai.p2p.speechsearch.domain.model.SearchResult
+import htw.ai.p2p.speechsearch.domain.{Index, Tokenizer}
 import io.circe.generic.auto._
 import io.circe.syntax.EncoderOps
 import munit.CatsEffectSuite
@@ -21,7 +21,7 @@ import org.http4s.implicits._
 class SearchesSpec extends CatsEffectSuite {
 
   test("Search returns status code 200") {
-    val searchResponse: Response[IO] = searchQuery(Search(query = "test"))
+    val searchResponse: Response[IO] = searchQuery(createSearchQuery)
     assert(
       searchResponse.status == Status.Ok,
       s"Expected '${searchResponse.status}' to be '${Status.Ok}'"
@@ -29,7 +29,7 @@ class SearchesSpec extends CatsEffectSuite {
   }
 
   test("Search returns SearchResult") {
-    val searchResult = searchQuery(Search(query = "test")).as[SearchResult]
+    val searchResult = searchQuery(createSearchQuery).as[SearchResult]
     assertIO(searchResult.map(_.results), Nil) // TODO
   }
 
@@ -40,9 +40,23 @@ class SearchesSpec extends CatsEffectSuite {
     new SearchRoutes(searches).routes.orNotFound
   }
 
-  private[this] def searchQuery(search: Search): Response[IO] = {
+  private[this] def searchQuery(search: QueryData): Response[IO] = {
     val postSearch =
       Request[IO](Method.POST, uri"/searches").withEntity(search.asJson)
     this.server.run(postSearch).unsafeRunSync()
   }
+
+  private def createSearchQuery =
+    QueryData(
+      max_results = 15,
+      `type` = "full_text",
+      terms = "this is a test",
+      extensions = List(
+        QueryExtensionData(
+          connector = "or",
+          `type` = "speaker",
+          terms = "Nelson Mandela"
+        )
+      )
+    )
 }

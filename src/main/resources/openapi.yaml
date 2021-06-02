@@ -73,7 +73,7 @@ components:
             max_results:
               default: 25
               type: integer
-            target:
+            type:
               type: string
               minLength: 1
               enum:
@@ -99,7 +99,7 @@ components:
                       - and
                       - and_not
                     default: or
-                  target:
+                  type:
                     type: string
                     minLength: 1
                     enum:
@@ -112,7 +112,7 @@ components:
                     minLength: 1
                 required:
                   - connector
-                  - target
+                  - type
                   - terms
       required:
         - query
