@@ -2,7 +2,6 @@ package htw.ai.p2p.speechsearch.api.indexes
 
 import cats.effect.Sync
 import cats.implicits._
-import htw.ai.p2p.speechsearch.api.indexes.Indexes.SpeechData
 import io.circe.generic.auto._
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec._

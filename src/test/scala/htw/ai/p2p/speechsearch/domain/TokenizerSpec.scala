@@ -16,7 +16,7 @@ class TokenizerSpec extends BaseShouldSpec {
 
     val tokens = tokenizer apply text
 
-    tokens should have size 17
+    tokens should have size 11
     tokens should contain allOf (
       "enterprise-resource-planning",
       "unternehmens-informationssystem"

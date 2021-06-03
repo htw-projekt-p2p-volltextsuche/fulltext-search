@@ -23,12 +23,12 @@ class Index(
   private val AffiliationPrefix = "_affiliation:"
 
   def index(speech: Speech): Index = {
-    val postings: Map[String, Posting] =
-      tokenizer(speech.text)
-        .groupMapReduce(identity)(_ => 1)(_ + _)
-        .map { case (term, tf) => term -> Posting(speech.docId, tf) }
-        .+(SpeakerPrefix + speech.speaker -> Posting(speech.docId, 0))
-        .+(AffiliationPrefix + speech.affiliation -> Posting(speech.docId, 0))
+    val tokens = tokenizer(speech.title) ::: tokenizer(speech.text)
+    val postings = tokens
+      .groupMapReduce(identity)(_ => 1)(_ + _)
+      .map { case (term, tf) => term -> Posting(speech.docId, tf) }
+      .+(SpeakerPrefix + speech.speaker -> Posting(speech.docId, 0))
+      .+(AffiliationPrefix + speech.affiliation -> Posting(speech.docId, 0))
 
     new Index(tokenizer, ii :++ postings)
   }

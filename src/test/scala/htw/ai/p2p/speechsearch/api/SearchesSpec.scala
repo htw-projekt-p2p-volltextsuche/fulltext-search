@@ -2,8 +2,7 @@ package htw.ai.p2p.speechsearch.api
 
 import cats.effect.IO
 import cats.effect.concurrent.Ref
-import htw.ai.p2p.speechsearch.api.searches.Searches.{QueryData, QueryExtensionData}
-import htw.ai.p2p.speechsearch.api.searches.{SearchRoutes, Searches}
+import htw.ai.p2p.speechsearch.api.searches.{QueryData, QueryExtensionData, SearchRoutes, Searches}
 import htw.ai.p2p.speechsearch.domain.invertedindex.LocalInvertedIndex
 import htw.ai.p2p.speechsearch.domain.model.SearchResult
 import htw.ai.p2p.speechsearch.domain.{Index, Tokenizer}
@@ -16,7 +15,7 @@ import org.http4s.circe.jsonEncoder
 import org.http4s.implicits._
 
 /**
-@author Joscha Seelig <jduesentrieb> 2021
+  * @author Joscha Seelig <jduesentrieb> 2021
  **/
 class SearchesSpec extends CatsEffectSuite {
 

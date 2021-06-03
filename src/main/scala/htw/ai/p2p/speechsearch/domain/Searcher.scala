@@ -19,7 +19,7 @@ class Searcher(index: Index) {
       .toSeq
       .sortBy(-_._2)
       .take(topK)
-      .map { case (doc, score) => ResultEntry(doc.id, score) }
+      .map { case (doc, score) => ResultEntry(doc, score) }
 
     SearchResult(results)
   }

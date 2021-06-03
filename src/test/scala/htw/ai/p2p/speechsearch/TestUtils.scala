@@ -1,5 +1,6 @@
 package htw.ai.p2p.speechsearch
 
+import htw.ai.p2p.speechsearch.api.indexes.SpeechData
 import htw.ai.p2p.speechsearch.domain.model.Speech
 import io.circe.generic.auto._
 import io.circe.jawn.decode
@@ -14,10 +15,13 @@ import scala.util.{Failure, Success, Using}
 object TestUtils {
 
   def readSpeechFromFile(fileName: String): Speech =
+    readSpeechDataFromFile(fileName).toDomain
+
+  def readSpeechDataFromFile(fileName: String): SpeechData =
     Using(fromResource(fileName))(_.getLines.mkString)
-      .flatMap(decode[Speech](_).toTry) match {
+      .flatMap(decode[SpeechData](_).toTry) match {
       case Success(content) => content
       case Failure(e) =>
-        fail(s"Reading file '$fileName' as '$Speech' failed.", e)
+        fail(s"Reading file '$fileName' as '$SpeechData' failed.", e)
     }
 }
