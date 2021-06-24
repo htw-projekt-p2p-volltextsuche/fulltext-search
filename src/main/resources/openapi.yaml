@@ -9,7 +9,7 @@ info:
 servers:
   - url: 'http://localhost:8421/api'
 paths:
-  /searches:
+  /api/searches:
     parameters: [ ]
     post:
       tags:
@@ -29,7 +29,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Search'
-  /indexes:
+  /api/indexes:
     post:
       tags:
         - index
