@@ -6,16 +6,20 @@ import htw.ai.p2p.speechsearch.api.indexes.Indexes
 import htw.ai.p2p.speechsearch.api.searches.Searches
 import htw.ai.p2p.speechsearch.domain._
 import htw.ai.p2p.speechsearch.domain.invertedindex.LocalInvertedIndex
-import htw.ai.p2p.speechsearch.domain.model.speech.{DocId, Speech}
+import htw.ai.p2p.speechsearch.domain.model.speech.Speech
+import htw.ai.p2p.speechsearch.domain.model.speech.Speech._
 import io.circe.jawn
+import org.slf4j.LoggerFactory
 
 import scala.io.Source.fromResource
-import scala.util.Using
+import scala.util.{Failure, Success, Using}
 
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
  */
 object SpeechSearchApp extends IOApp {
+
+  private val Logger = LoggerFactory.getLogger(getClass)
 
   private val PortEnv = "PORT"
   private val DefaultPort = 8421
@@ -47,10 +51,16 @@ object SpeechSearchApp extends IOApp {
   // TODO: remove seeding
   def readSpeeches(fileName: String): IO[List[Speech]] = IO {
     Using(fromResource(fileName))(_.getLines.mkString)
-      .flatMap(jawn.decode[List[Speech]](_).toTry)
-      .get
-      .zipWithIndex
-      .map(s => s._1.copy(DocId(s._2.toString)))
+      .flatMap(jawn.decode[List[Speech]](_).toTry) match {
+      case Failure(e) =>
+        Logger.error(
+          "reading sample data from '{}' failed with Exception: {}",
+          fileName,
+          e
+        )
+        Nil
+      case Success(value) => value
+    }
   }
 
 }
