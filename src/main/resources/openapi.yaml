@@ -1,17 +1,16 @@
-openapi: 3.1.0
+openapi: 3.0.0
 info:
-  title: p2p-search-engine
+  title: Bundestags-speeches search API
   version: '1.0'
-  summary: Bundestags-speeches search API
-  description: This API provides access to the functionality of the full-text search engine. The provided functionality is the search for terms in indexed documents and the indexing of documents themselves.
+  description: This API provides access to the functionality of the full-text search engine. The provided functionality is the search for terms in indexed documents, and the indexing of documents themselves.
   contact:
     name: Joscha Seelig
     email: s0566845@htw-berlin.de
 servers:
-  - url: 'http://localhost:3000'
+  - url: 'http://localhost:8421/api'
 paths:
   /searches:
-    parameters: []
+    parameters: [ ]
     post:
       tags:
         - search
@@ -22,100 +21,106 @@ paths:
           $ref: '#/components/responses/SearchResult'
         '400':
           description: Bad Request
+        '422':
+          description: Unprocessable Entity
       description: Retrieve the most relevant documents for the given search query.
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Query'
+              $ref: '#/components/schemas/Search'
   /indexes:
     post:
       tags:
         - index
-      summary: Index the speeches
+      summary: Index speech
       operationId: post-speech
       responses:
         '200':
           description: OK
         '400':
           description: Bad Request
-      description: Include a speech to the inverted index.
-      parameters: []
+        '422':
+          description: Unprocessable Entity
+      description: Include a speech into the inverted index.
+      parameters: [ ]
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Speech'
-    parameters: []
+    parameters: [ ]
 components:
   schemas:
-    Query:
-      description: This entity is an abstraction over a query for searching the indexed documents
+    Search:
+      description: This entity represents a search over the indexed documents.
       type: object
       x-examples:
         example:
-          query:
+          search:
             max_results: 25
-            type: full_text
-            terms: Corona Regeln Juni
-            extensions:
-              - connector: and
-                type: affiliation
-                terms: cdu
+            query:
+              terms: Corona Regeln Juni
+              additions:
+                - connector: or
+                  terms: Covid Rules July
+            filter:
+              - criteria: affiliation
+                value: cdu
       properties:
-        query:
+        search:
           type: object
           required:
-            - target
-            - terms
-            - extensions
+            - query
           properties:
             max_results:
               default: 25
               type: integer
-            type:
-              type: string
-              minLength: 1
-              enum:
-                - full_text
-                - affiliation
-                - speaker
-              default: full_text
-            terms:
-              type: string
-              minLength: 1
-            extensions:
+            query:
+              type: object
+              properties:
+                terms:
+                  type: string
+                additions:
+                  type: array
+                  uniqueItems: false
+                  minItems: 0
+                  items:
+                    type: object
+                    properties:
+                      connector:
+                        type: string
+                        minLength: 1
+                        enum:
+                          - or
+                          - and
+                          - and_not
+                        default: or
+                      terms:
+                        type: string
+                    required:
+                      - terms
+            filter:
               type: array
               uniqueItems: true
-              minItems: 1
+              minItems: 0
               items:
                 type: object
                 properties:
-                  connector:
+                  criteria:
                     type: string
                     minLength: 1
                     enum:
-                      - or
-                      - and
-                      - and_not
-                    default: or
-                  type:
-                    type: string
-                    minLength: 1
-                    enum:
-                      - full_text
                       - affiliation
                       - speaker
-                    default: full_text
-                  terms:
+                  value:
                     type: string
                     minLength: 1
-                required:
-                  - connector
-                  - type
-                  - terms
+              required:
+                - criteria
+                - term
       required:
-        - query
+        - search
     Speech:
       description: This entity contains all relevant information related to a single speech
       type: object
@@ -131,7 +136,7 @@ components:
         id:
           type: string
           minLength: 1
-          description: docId as uuid
+          description: doc_id as uuid
           format: uuid
         title:
           type: string
@@ -170,12 +175,8 @@ components:
               example-1:
                 total: 12312
                 results:
-                  - docId: 5b1b4727-0bb6-49d6-b8f2-401561fc8ebc
+                  - doc_id: 5b1b4727-0bb6-49d6-b8f2-401561fc8ebc
                     score: 0.6782134
-                    positions:
-                      - 76
-                      - 123
-                      - 612
             properties:
               total:
                 type: integer
@@ -187,7 +188,7 @@ components:
                 items:
                   type: object
                   properties:
-                    docId:
+                    doc_id:
                       type: string
                       minLength: 1
                       format: uuid
@@ -195,14 +196,8 @@ components:
                       type: number
                       format: double
                       minimum: 0
-                    positions:
-                      type: array
-                      uniqueItems: true
-                      items:
-                        type: integer
-                        minimum: 0
                   required:
-                    - docId
+                    - doc_id
                     - score
             required:
               - total

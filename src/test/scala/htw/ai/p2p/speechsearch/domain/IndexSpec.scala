@@ -4,14 +4,12 @@ import htw.ai.p2p.speechsearch.BaseShouldSpec
 import htw.ai.p2p.speechsearch.TestUtils.readSpeechFromFile
 
 /**
-  * @author Joscha Seelig <jduesentrieb> 2021
- **/
+ * @author Joscha Seelig <jduesentrieb> 2021
+ */
 class IndexSpec extends BaseShouldSpec {
 
-  behavior of "An Index"
-
-  it should "find a posting after indexing a speech" in {
-    val speech = readSpeechFromFile("speech_carsten_schneider_23_04_2021.txt")
+  "An Index" should "find a posting after indexing a speech" in {
+    val speech = readSpeechFromFile("speech_carsten_schneider_23_04_2021.json")
 
     val nextIndex = Index().index(speech)
 
@@ -22,8 +20,8 @@ class IndexSpec extends BaseShouldSpec {
   }
 
   it should "find all postings after indexing multiple speeches" in {
-    val speech1 = readSpeechFromFile("speech_carsten_schneider_23_04_2021.txt")
-    val speech2 = readSpeechFromFile("speech_olaf_scholz_23_04_2021.txt")
+    val speech1 = readSpeechFromFile("speech_carsten_schneider_23_04_2021.json")
+    val speech2 = readSpeechFromFile("speech_olaf_scholz_23_04_2021.json")
 
     val nextIndex = Index().index(speech1).index(speech2)
 

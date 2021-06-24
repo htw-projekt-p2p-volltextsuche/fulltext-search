@@ -1,42 +1,58 @@
 package htw.ai.p2p.speechsearch.domain
 
-import htw.ai.p2p.speechsearch.domain.invertedindex.{InvertedIndex, LocalInvertedIndex}
-import htw.ai.p2p.speechsearch.domain.model.{Posting, Speech}
+import htw.ai.p2p.speechsearch.domain.Tokenizer.constructFilterTerm
+import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex._
+import htw.ai.p2p.speechsearch.domain.invertedindex._
+import htw.ai.p2p.speechsearch.domain.model.search.FilterCriteria.{Affiliation, Speaker}
+import htw.ai.p2p.speechsearch.domain.model.speech._
 
 /**
-  * Main unit for the management of the inverted index.
-  * It handles the creation, updating as well as the readout of the inverted index.…
-  *
-  * @author Joscha Seelig <jduesentrieb> 2021
- **/
-object Index {
-  def apply(): Index = Index(Tokenizer(), LocalInvertedIndex())
-  def apply(t: Tokenizer, ii: InvertedIndex) = new Index(t, ii)
-}
-
+ * Main unit for the management of the inverted index.
+ * It handles the creation, updating as well as the readout of the inverted index.
+ *
+ * @author Joscha Seelig <jduesentrieb> 2021
+ */
 class Index(
-    val tokenizer: Tokenizer,
-    private val ii: InvertedIndex
-) {
-
-  private val SpeakerPrefix = "_speaker:"
-  private val AffiliationPrefix = "_affiliation:"
+             val tokenizer: Tokenizer,
+             private val ii: InvertedIndex
+           ) {
 
   def index(speech: Speech): Index = {
-    val tokens = tokenizer(speech.title) ::: tokenizer(speech.text)
-    val postings = tokens
-      .groupMapReduce(identity)(_ => 1)(_ + _)
-      .map { case (term, tf) => term -> Posting(speech.docId, tf) }
-      .+(SpeakerPrefix + speech.speaker -> Posting(speech.docId, 0))
-      .+(AffiliationPrefix + speech.affiliation -> Posting(speech.docId, 0))
+    val terms = tokenizer(speech.title) ::: tokenizer(speech.text)
+    val docLen = terms.size
+    val postings = buildPostings(speech, terms, docLen)
+    val filters = buildFilters(speech, docLen)
 
-    new Index(tokenizer, ii :++ postings)
+    new Index(tokenizer, ii :++ postings ++ filters)
   }
 
-  def postings(term: String): List[Posting] = ii(term.toLowerCase)
+  def postings(term: Term): PostingList = ii(term.toLowerCase)
 
-  def docCount(term: String): Int =
-    postings(term).size // TODO: this needs to be optimized
+  def postings(terms: List[Term]): Map[Term, PostingList] = ii getAll (terms map (_.toLowerCase))
 
-  def size: Int = ii.size
+  def size: Int = ii.size // TODO: optimize
+
+  private def buildFilters(speech: Speech, docLen: Int) =
+    Map(
+      constructFilterTerm(Speaker, speech.speaker) -> Posting(speech.docId, 0, docLen),
+      constructFilterTerm(Affiliation, speech.affiliation) -> Posting(speech.docId, 0, docLen)
+    )
+
+  private def buildPostings(
+                             speech: Speech,
+                             terms: List[String],
+                             docLen: Int
+                           ): Map[String, Posting] =
+    for {
+      (term, tf) <- terms.groupMapReduce(identity)(_ => 1)(_ + _)
+    } yield term -> Posting(speech.docId, tf, docLen)
+
+}
+
+object Index {
+
+  def apply(): Index = Index(Tokenizer(), LocalInvertedIndex())
+
+  def apply(t: Tokenizer, ii: InvertedIndex) = new Index(t, ii)
+
 }

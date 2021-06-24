@@ -1,15 +1,22 @@
 package htw.ai.p2p.speechsearch.api
 
-import htw.ai.p2p.speechsearch.api.indexes.SpeechData
-import htw.ai.p2p.speechsearch.api.searches.QueryData
+import htw.ai.p2p.speechsearch.ApplicationConfig._
+import htw.ai.p2p.speechsearch.domain.model.search.Search
+import htw.ai.p2p.speechsearch.domain.model.speech.Speech
+import io.circe.Codec
+import io.circe.generic.extras.semiauto._
 
 /**
-  * @author Joscha Seelig <jduesentrieb> 2021
-**/
+ * @author Joscha Seelig <jduesentrieb> 2021
+ */
 sealed trait ApiError
 
-final case class SearchError(queryData: QueryData, message: String)
-    extends ApiError
+object ApiError {
 
-final case class IndexError(speechData: SpeechData, message: String)
-    extends ApiError
+  implicit val codec: Codec[ApiError] = deriveConfiguredCodec
+
+}
+
+final case class SearchError(search: Search, message: String) extends ApiError
+
+final case class IndexError(speech: Speech, message: String) extends ApiError

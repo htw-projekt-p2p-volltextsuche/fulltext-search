@@ -13,29 +13,29 @@ import org.http4s.server.middleware.Logger
 import scala.concurrent.ExecutionContext.global
 
 /**
-  * @author Joscha Seelig <jduesentrieb> 2021
-**/
+ * @author Joscha Seelig <jduesentrieb> 2021
+ */
 object SpeechSearchServer {
 
   def stream[F[_]: ConcurrentEffect](
-      port: Int,
-      searchAlg: Searches[F],
-      indexAlg: Indexes[F],
-      apiPrefix: String
-  )(implicit T: Timer[F]): Stream[F, ExitCode] = {
+                                      port: Int,
+                                      searchAlg: Searches[F],
+                                      indexAlg: Indexes[F],
+                                      apiPrefix: String
+                                    )(implicit T: Timer[F]): Stream[F, ExitCode] = {
     val httpApp = Router(
       apiPrefix -> (
         new SearchRoutes[F](searchAlg).routes <+> new IndexRoutes[F](indexAlg).routes
       )
     ).orNotFound
 
-    // Middleware
-    val finalHttpApp =
+    val appWithMiddleware =
       Logger.httpApp(logHeaders = true, logBody = true)(httpApp)
 
     BlazeServerBuilder[F](global)
       .bindHttp(port, "0.0.0.0")
-      .withHttpApp(finalHttpApp)
+      .withHttpApp(appWithMiddleware)
       .serve
   }
+
 }

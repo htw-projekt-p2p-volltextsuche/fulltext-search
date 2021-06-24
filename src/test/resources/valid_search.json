@@ -1,0 +1,20 @@
+{
+  "search": {
+    "query": {
+      "terms": "hello",
+      "additions": [
+        {
+          "connector": "and",
+          "terms": "world"
+        }
+      ]
+    },
+    "filter": [
+      {
+        "criteria": "speaker",
+        "value": "Nelson Mandela"
+      }
+    ],
+    "max_results": 15
+  }
+}
