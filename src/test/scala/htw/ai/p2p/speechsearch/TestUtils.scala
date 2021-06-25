@@ -15,15 +15,19 @@ import scala.util._
  */
 object TestUtils {
 
-  def readSpeechFromFile(fileName: String): Speech = readEntityFromFile(fileName)(decode[Speech])
+  def readSpeechFromFile(fileName: String): Speech =
+    readEntityFromFile(fileName)(decode[Speech])
 
-  def readSearchFromFile(fileName: String): Search = readEntityFromFile(fileName)(decode[Search])
+  def readSearchFromFile(fileName: String): Search =
+    readEntityFromFile(fileName)(decode[Search])
 
   def readFile(fileName: String): String =
     Using(fromResource(fileName))(_.getLines.mkString)
       .getOrFail(fileName)
 
-  private def readEntityFromFile[A](fileName: String)(decode: String => Either[Error, A]): A =
+  private def readEntityFromFile[A](
+    fileName: String
+  )(decode: String => Either[Error, A]): A =
     Using(fromResource(fileName))(_.getLines.mkString)
       .flatMap(decode(_).toTry)
       .getOrFail(fileName)

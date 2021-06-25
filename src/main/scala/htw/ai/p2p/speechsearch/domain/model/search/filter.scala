@@ -11,7 +11,9 @@ sealed abstract class FilterCriteria(val value: String) extends StringEnumEntry 
   def name: String = value
 }
 
-object FilterCriteria extends StringEnum[FilterCriteria] with StringCirceEnum[FilterCriteria] {
+object FilterCriteria
+    extends StringEnum[FilterCriteria]
+    with StringCirceEnum[FilterCriteria] {
   val values: IndexedSeq[FilterCriteria] = findValues
 
   case object Affiliation extends FilterCriteria("affiliation")

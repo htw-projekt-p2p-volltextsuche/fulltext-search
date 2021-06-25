@@ -28,7 +28,7 @@ class LocalInvertedIndexSpec extends BaseShouldSpec {
   }
 
   it should "also get with apply alias" in {
-    val posting = Posting(DocId("123"), 1, 100)
+    val posting              = Posting(DocId("123"), 1, 100)
     val index: InvertedIndex = LocalInvertedIndex().insert("test", posting)
 
     val result = index("test")
@@ -38,8 +38,8 @@ class LocalInvertedIndexSpec extends BaseShouldSpec {
 
   it should "append posting when term is already present" in {
     val knownPosting = Posting(DocId("known"), 1, 100)
-    val newPosting = Posting(DocId("unknown"), 3, 100)
-    val index = LocalInvertedIndex().insert("test", knownPosting)
+    val newPosting   = Posting(DocId("unknown"), 3, 100)
+    val index        = LocalInvertedIndex().insert("test", knownPosting)
 
     val newIndex = index.insert("test", newPosting)
 
@@ -68,7 +68,7 @@ class LocalInvertedIndexSpec extends BaseShouldSpec {
 
   it should "append all postings when terms are already present" in {
     val knownPosting = Posting(DocId("known"), 1, 100)
-    val newPosting = Posting(DocId("first"), 3, 100)
+    val newPosting   = Posting(DocId("first"), 3, 100)
     val newPostings = Map(
       "term 1" -> newPosting,
       "term 2" -> Posting(DocId("second"), 3, 100)

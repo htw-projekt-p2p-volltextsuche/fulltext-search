@@ -18,15 +18,15 @@ object Indexes {
 
   def apply[F[_]](implicit ev: Indexes[F]): Indexes[F] = ev
 
-  def impl[F[_] : Sync](indexRef: Ref[F, Index]): Indexes[F] =
+  def impl[F[_]: Sync](indexRef: Ref[F, Index]): Indexes[F] =
     speech =>
       for {
         success <- indexRef tryUpdate (_.index(speech))
         result = if (success) Right(createSuccessMessage(speech))
-        else Left(createIndexError(speech))
+                 else Left(createIndexError(speech))
       } yield result
 
-  private def createSuccessMessage[F[_] : Sync](speech: Speech) =
+  private def createSuccessMessage[F[_]: Sync](speech: Speech) =
     s"Speech with id ${speech.docId} was successfully indexed"
 
   private def createIndexError(speech: Speech) =

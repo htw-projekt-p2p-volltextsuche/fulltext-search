@@ -18,10 +18,10 @@ trait Searches[F[_]] {
 object Searches {
   def apply[F[_]](implicit ev: Searches[F]): Searches[F] = ev
 
-  def impl[F[_] : Sync](indexRef: Ref[F, Index]): Searches[F] =
+  def impl[F[_]: Sync](indexRef: Ref[F, Index]): Searches[F] =
     search =>
       for {
-        index <- indexRef.get
+        index       <- indexRef.get
         searchResult = Searcher(index).search(search)
       } yield Right(searchResult)
 }

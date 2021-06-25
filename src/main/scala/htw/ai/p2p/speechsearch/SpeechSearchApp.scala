@@ -21,9 +21,9 @@ object SpeechSearchApp extends IOApp {
 
   private val Logger = LoggerFactory.getLogger(getClass)
 
-  private val PortEnv = "PORT"
+  private val PortEnv     = "PORT"
   private val DefaultPort = 8421
-  private val ApiPrefix = "/api"
+  private val ApiPrefix   = "/api"
 
   override def run(args: List[String]): IO[ExitCode] = {
     val port = args.headOption
@@ -33,12 +33,12 @@ object SpeechSearchApp extends IOApp {
     val index = Index(Tokenizer(), LocalInvertedIndex())
 
     for {
-      samples <- readSpeeches("sample_data.json")
+      samples    <- readSpeeches("sample_data.json")
       seededIndex = samples.foldLeft(index)(_.index(_))
 
       indexRef <- Ref[IO].of(seededIndex)
-      searches = Searches.impl[IO](indexRef)
-      indexes = Indexes.impl[IO](indexRef)
+      searches  = Searches.impl[IO](indexRef)
+      indexes   = Indexes.impl[IO](indexRef)
       exitCode <-
         SpeechSearchServer
           .stream[IO](port, searches, indexes, ApiPrefix)

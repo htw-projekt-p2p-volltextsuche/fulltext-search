@@ -7,17 +7,19 @@ import io.circe.generic.extras.auto._
 import io.circe.generic.extras.semiauto._
 
 case class Search(
-                   query: Query,
-                   filter: List[QueryFilter] = Nil,
-                   maxResults: Int = MaxResultsDefault
-                 )
+  query: Query,
+  filter: List[QueryFilter] = Nil,
+  maxResults: Int = MaxResultsDefault
+)
 
 object Search {
 
   val MaxResultsDefault = 25
-  val SearchJsonKey = "search"
+  val SearchJsonKey     = "search"
 
-  implicit val decoder: Decoder[Search] = deriveConfiguredDecoder[Search] prepare (_.downField(SearchJsonKey))
-  implicit val encoder: Encoder[Search] = deriveConfiguredEncoder[Search] mapJson (j => Json.obj((SearchJsonKey, j)))
+  implicit val decoder: Decoder[Search] =
+    deriveConfiguredDecoder[Search] prepare (_.downField(SearchJsonKey))
+  implicit val encoder: Encoder[Search] =
+    deriveConfiguredEncoder[Search] mapJson (j => Json.obj((SearchJsonKey, j)))
 
 }

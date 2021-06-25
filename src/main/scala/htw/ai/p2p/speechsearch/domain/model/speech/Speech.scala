@@ -10,13 +10,13 @@ import java.time.LocalDate
  * @author Joscha Seelig <jduesentrieb> 2021
  */
 case class Speech(
-                   docId: DocId,
-                   title: String,
-                   speaker: String,
-                   affiliation: String,
-                   date: LocalDate,
-                   text: String
-                 )
+  docId: DocId,
+  title: String,
+  speaker: String,
+  affiliation: String,
+  date: LocalDate,
+  text: String
+)
 
 object Speech {
 

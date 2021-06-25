@@ -8,14 +8,14 @@ import htw.ai.p2p.speechsearch.domain.model.search.Connector.Or
  * @author Joscha Seelig <jduesentrieb> 2021
  */
 case class Query(
-                  terms: String,
-                  additions: List[QueryElement] = Nil
-                )
+  terms: String,
+  additions: List[QueryElement] = Nil
+)
 
 case class QueryElement(
-                         connector: Connector = Or,
-                         terms: String
-                       )
+  connector: Connector = Or,
+  terms: String
+)
 
 sealed trait Connector extends EnumEntry with Snakecase
 

@@ -18,11 +18,11 @@ import scala.concurrent.ExecutionContext.global
 object SpeechSearchServer {
 
   def stream[F[_]: ConcurrentEffect](
-                                      port: Int,
-                                      searchAlg: Searches[F],
-                                      indexAlg: Indexes[F],
-                                      apiPrefix: String
-                                    )(implicit T: Timer[F]): Stream[F, ExitCode] = {
+    port: Int,
+    searchAlg: Searches[F],
+    indexAlg: Indexes[F],
+    apiPrefix: String
+  )(implicit T: Timer[F]): Stream[F, ExitCode] = {
     val httpApp = Router(
       apiPrefix -> (
         new SearchRoutes[F](searchAlg).routes <+> new IndexRoutes[F](indexAlg).routes

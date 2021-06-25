@@ -7,4 +7,7 @@ import org.scalatest.matchers.should
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
  */
-abstract class BaseShouldSpec extends AsyncFlatSpec with AsyncIOSpec with should.Matchers
+abstract class BaseShouldSpec
+    extends AsyncFlatSpec
+    with AsyncIOSpec
+    with should.Matchers

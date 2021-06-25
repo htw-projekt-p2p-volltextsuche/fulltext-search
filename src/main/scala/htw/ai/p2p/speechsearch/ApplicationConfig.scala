@@ -7,6 +7,7 @@ import io.circe.generic.extras.Configuration
  */
 object ApplicationConfig {
 
-  implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames.withDefaults
+  implicit val config: Configuration =
+    Configuration.default.withSnakeCaseMemberNames.withDefaults
 
 }

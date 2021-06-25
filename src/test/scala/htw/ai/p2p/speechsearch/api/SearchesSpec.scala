@@ -59,7 +59,7 @@ class SearchesSpec extends BaseShouldSpec {
   }
 
   val server: HttpApp[IO] = {
-    val index = Index(Tokenizer(), LocalInvertedIndex())
+    val index    = Index(Tokenizer(), LocalInvertedIndex())
     val indexRef = Ref[IO].of(index).unsafeRunSync
     val searches = Searches.impl[IO](indexRef)
     new SearchRoutes(searches).routes.orNotFound

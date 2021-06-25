@@ -38,9 +38,9 @@ class IndexesSpec extends BaseShouldSpec {
   }
 
   private val server: HttpApp[IO] = {
-    val index = Index(Tokenizer(), LocalInvertedIndex())
+    val index    = Index(Tokenizer(), LocalInvertedIndex())
     val indexRef = Ref[IO].of(index).unsafeRunSync
-    val indexes = Indexes.impl(indexRef)
+    val indexes  = Indexes.impl(indexRef)
     new IndexRoutes(indexes).routes.orNotFound
   }
 

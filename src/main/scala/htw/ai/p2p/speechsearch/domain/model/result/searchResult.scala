@@ -18,6 +18,6 @@ object SearchResult {
   type Score = Double
 
   implicit val searchResultCodec: Codec[SearchResult] = deriveConfiguredCodec
-  implicit val resultEntryCodec: Codec[ResultEntry] = deriveConfiguredCodec
+  implicit val resultEntryCodec: Codec[ResultEntry]   = deriveConfiguredCodec
 
 }

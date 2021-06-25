@@ -19,9 +19,9 @@ class IndexRoutes[F[_]: Sync](indexes: Indexes[F]) extends Http4sDsl[F] {
         speech <- req.as[Speech]
         result <- indexes.create(speech)
         resp <- result match {
-          case Left(error) => BadRequest(error)
-          case Right(_) => Ok()
-        }
+                  case Left(error) => BadRequest(error)
+                  case Right(_)    => Ok()
+                }
       } yield resp
   }
 
