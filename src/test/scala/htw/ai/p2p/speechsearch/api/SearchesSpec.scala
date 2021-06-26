@@ -26,14 +26,12 @@ class SearchesSpec extends BaseShouldSpec {
   private val Logger: Logger = LoggerFactory.getLogger(getClass)
 
   "The Route /searches" should "return status code 200 for valid search" in {
-
     val response = postSearch(entireSearch.asJson)
 
     response.status shouldBe Status.Ok
   }
 
   it should "return valid SearchResult" in {
-
     val searchResult = postSearch(entireSearch.asJson).as[SearchResult]
 
     searchResult.asserting { result =>
@@ -43,7 +41,6 @@ class SearchesSpec extends BaseShouldSpec {
   }
 
   it should "decode speech from json properly" in {
-
     val search = readFile("valid_search.json")
 
     val response = postSearch(search)
@@ -52,15 +49,14 @@ class SearchesSpec extends BaseShouldSpec {
   }
 
   it should "return throw InvalidMessageBodyFailure when invalid body is sent" in {
-
     val invalidSearch = json"""{"search":{"max_results":42}}"""
 
     a[InvalidMessageBodyFailure] should be thrownBy postSearch(invalidSearch)
   }
 
   val server: HttpApp[IO] = {
-    val index    = Index(Tokenizer(), LocalInvertedIndex())
-    val indexRef = Ref[IO].of(index).unsafeRunSync
+    val index = Index(Tokenizer(), LocalInvertedIndex())
+    val indexRef = Ref[IO].of(index).unsafeRunSync()
     val searches = Searches.impl[IO](indexRef)
     new SearchRoutes(searches).routes.orNotFound
   }
@@ -74,7 +70,7 @@ class SearchesSpec extends BaseShouldSpec {
       json
     )
     val postSearch = Request[IO](Method.POST, uri"/searches").withEntity(json)
-    this.server.run(postSearch).unsafeRunSync
+    this.server.run(postSearch).unsafeRunSync()
   }
 
 }

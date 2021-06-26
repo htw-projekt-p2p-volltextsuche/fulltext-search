@@ -8,37 +8,43 @@ import htw.ai.p2p.speechsearch.domain._
 import htw.ai.p2p.speechsearch.domain.invertedindex.LocalInvertedIndex
 import htw.ai.p2p.speechsearch.domain.model.speech.Speech
 import htw.ai.p2p.speechsearch.domain.model.speech.Speech._
-import io.circe.jawn
-import org.slf4j.LoggerFactory
+import io.chrisdavenport.log4cats.Logger
+import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
+import io.circe.jawn._
 
 import scala.io.Source.fromResource
-import scala.util.{Failure, Success, Using}
 
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
  */
 object SpeechSearchApp extends IOApp {
 
-  private val Logger = LoggerFactory.getLogger(getClass)
+  implicit def unsafeLogger[F[_] : Sync]: Logger[F] = Slf4jLogger.getLogger[F]
 
-  private val PortEnv     = "PORT"
+  private val PortEnv = "HTTP_PORT"
   private val DefaultPort = 8421
-  private val ApiPrefix   = "/api"
+  private val ApiPrefix = "/api"
+  private val StopWordsResourceName = "stopwords_de.txt"
 
   override def run(args: List[String]): IO[ExitCode] = {
     val port = args.headOption
       .orElse(sys.env.get(PortEnv))
       .fold(DefaultPort)(_.toInt)
 
-    val index = Index(Tokenizer(), LocalInvertedIndex())
-
     for {
-      samples    <- readSpeeches("sample_data.json")
+      logger <- Slf4jLogger.create[IO]
+      stopWords <- readStopWords(StopWordsResourceName, logger)
+      tokenizer = Tokenizer(stopWords)
+      invertedIndex = LocalInvertedIndex()
+      index = Index(tokenizer, invertedIndex)
+
+      samples <- readSpeeches("sample_data.json", logger)
       seededIndex = samples.foldLeft(index)(_.index(_))
 
       indexRef <- Ref[IO].of(seededIndex)
-      searches  = Searches.impl[IO](indexRef)
-      indexes   = Indexes.impl[IO](indexRef)
+      searches = Searches.impl[IO](indexRef)
+      indexes = Indexes.impl[IO](indexRef)
+
       exitCode <-
         SpeechSearchServer
           .stream[IO](port, searches, indexes, ApiPrefix)
@@ -48,19 +54,25 @@ object SpeechSearchApp extends IOApp {
     } yield exitCode
   }
 
+  def readStopWords(fileName: String, logger: Logger[IO]): IO[Set[String]] =
+    Resource
+      .fromAutoCloseable(IO(fromResource(StopWordsResourceName)))
+      .use(source => IO(source.getLines().toSet))
+      .handleErrorWith { e =>
+        logger.error(e)(
+          s"Reading stop words from file '$fileName' failed."
+        ) *> IO.pure(Set.empty)
+      }
+
   // TODO: remove seeding
-  def readSpeeches(fileName: String): IO[List[Speech]] = IO {
-    Using(fromResource(fileName))(_.getLines.mkString)
-      .flatMap(jawn.decode[List[Speech]](_).toTry) match {
-      case Failure(e) =>
-        Logger.error(
-          "reading sample data from '{}' failed with Exception: {}",
-          fileName,
-          e
-        )
-        Nil
-      case Success(value) => value
-    }
-  }
+  def readSpeeches(fileName: String, logger: Logger[IO]): IO[List[Speech]] =
+    Resource
+      .fromAutoCloseable(IO(fromResource(fileName)))
+      .use(source => IO.fromEither(decode[List[Speech]](source.getLines().mkString)))
+      .handleErrorWith { e =>
+        logger.error(e)(
+          s"Reading sample data from '$fileName' failed with Exception: $e"
+        ) *> IO.raiseError(e)
+      }
 
 }

@@ -97,6 +97,7 @@ class Searcher(index: Index) {
   private def applyFilter(
     filter: List[QueryFilter]
   )(chunkResult: PartialResult, ii: CachedIndex): PartialResult =
+    // TODO: combine filters of same type and connect them with OR
     filter map (retrieveFilterSet(_, ii)) match {
       case Nil        => chunkResult
       case filterSets => connect(And)(chunkResult :: filterSets)

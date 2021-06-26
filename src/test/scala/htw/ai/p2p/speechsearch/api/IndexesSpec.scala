@@ -38,9 +38,9 @@ class IndexesSpec extends BaseShouldSpec {
   }
 
   private val server: HttpApp[IO] = {
-    val index    = Index(Tokenizer(), LocalInvertedIndex())
-    val indexRef = Ref[IO].of(index).unsafeRunSync
-    val indexes  = Indexes.impl(indexRef)
+    val index = Index(Tokenizer(), LocalInvertedIndex())
+    val indexRef = Ref[IO].of(index).unsafeRunSync()
+    val indexes = Indexes.impl(indexRef)
     new IndexRoutes(indexes).routes.orNotFound
   }
 
@@ -50,6 +50,6 @@ class IndexesSpec extends BaseShouldSpec {
   private[this] def indexSpeechAsPlainText(speechJson: String): Response[IO] = {
     val postSpeech =
       Request[IO](Method.POST, uri"/indexes").withEntity(speechJson)
-    this.server.run(postSpeech).unsafeRunSync
+    this.server.run(postSpeech).unsafeRunSync()
   }
 }
