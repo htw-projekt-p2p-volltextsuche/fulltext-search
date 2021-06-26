@@ -83,7 +83,7 @@ terms.
 
 ### Filtered Queries
 
-Actually the queries can be filtered by *speaker* or *affiliation*.
+Up until now the queries can be filtered by *speaker* or *affiliation*.
 
 If several filters with same criteria are specified they're combined by *OR*, while the entire set resulting from all
 filters of same type will by combined by *AND* with the actually specified query results.
