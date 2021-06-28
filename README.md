@@ -28,7 +28,7 @@ $ sbt test
 
 ## Retrieve Search Results
 
-📁 [To the API-Doc's](http://link-to-api-docs.TODO)
+📁 [To the API-Doc's](https://htw-projekt-p2p-volltextsuche.github.io/fulltext-search/)
 
 ### Simple Queries
 

@@ -72,8 +72,8 @@ lazy val generated = (project in file("generated"))
   .settings(
     buildSettings ++ Seq(
       openApiInputSpec := "docs/openapi.yaml",
-      openApiOutputDir := "docs",
-      openApiGeneratorName := "markdown",
+      openApiOutputDir := "docs/target/generated",
+      openApiGeneratorName := "html2",
       openApiGenerateApiDocumentation := SettingEnabled,
       openApiValidateSpec := SettingEnabled,
       openApiGenerateModelDocumentation := SettingEnabled,
