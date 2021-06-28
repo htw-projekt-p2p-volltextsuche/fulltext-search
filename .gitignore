@@ -37,6 +37,7 @@ build
 .scala_dependencies
 .cache
 .cache-main
+.openapi-generator
 
 #general
 *.class

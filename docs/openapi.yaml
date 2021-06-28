@@ -1,0 +1,207 @@
+openapi: 3.0.0
+info:
+  title: Bundestags-speeches search API
+  version: '1.0'
+  description: This API provides access to the functionality of the full-text search engine. The provided functionality is the search for terms in indexed documents, and the indexing of documents themselves.
+  contact:
+    name: Joscha Seelig
+    email: s0566845@htw-berlin.de
+servers:
+  - url: 'http://localhost:8421/api'
+paths:
+  /searches:
+    parameters: [ ]
+    post:
+      tags:
+        - search
+      summary: Search speeches
+      operationId: post-search
+      responses:
+        '200':
+          $ref: '#/components/responses/SearchResult'
+        '400':
+          description: Bad Request
+        '422':
+          description: Unprocessable Entity
+      description: Retrieve the most relevant documents for the given search query.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Search'
+  /indexes:
+    post:
+      tags:
+        - index
+      summary: Index speech
+      operationId: post-speech
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+        '422':
+          description: Unprocessable Entity
+      description: Include a speech into the inverted index.
+      parameters: [ ]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Speech'
+    parameters: [ ]
+components:
+  schemas:
+    Search:
+      description: This entity represents a search over the indexed documents.
+      type: object
+      x-examples:
+        example:
+          search:
+            max_results: 25
+            query:
+              terms: Corona Regeln Juni
+              additions:
+                - connector: or
+                  terms: Covid Rules July
+            filter:
+              - criteria: affiliation
+                value: cdu
+      properties:
+        search:
+          type: object
+          required:
+            - query
+          properties:
+            max_results:
+              default: 25
+              type: integer
+            query:
+              type: object
+              properties:
+                terms:
+                  type: string
+                additions:
+                  type: array
+                  uniqueItems: false
+                  minItems: 0
+                  items:
+                    type: object
+                    properties:
+                      connector:
+                        type: string
+                        minLength: 1
+                        enum:
+                          - or
+                          - and
+                          - and_not
+                        default: or
+                      terms:
+                        type: string
+                    required:
+                      - terms
+            filter:
+              type: array
+              uniqueItems: true
+              minItems: 0
+              items:
+                type: object
+                properties:
+                  criteria:
+                    type: string
+                    minLength: 1
+                    enum:
+                      - affiliation
+                      - speaker
+                  value:
+                    type: string
+                    minLength: 1
+              required:
+                - criteria
+                - term
+      required:
+        - search
+    Speech:
+      description: This entity contains all relevant information related to a single speech
+      type: object
+      x-examples:
+        example:
+          id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+          title: Super interesting speech
+          speaker: someone
+          affiliation: somegroup
+          date: '2019-08-24'
+          text: blah blah blah...
+      properties:
+        id:
+          type: string
+          minLength: 1
+          description: doc_id as uuid
+          format: uuid
+        title:
+          type: string
+          minLength: 1
+        speaker:
+          type: string
+          minLength: 1
+        affiliation:
+          type: string
+          minLength: 1
+          description: affiliation the speaker belongs to
+        date:
+          type: string
+          minLength: 1
+          description: 'date at which the speech was given in ISO 8601-1:2019 format'
+          format: date
+        text:
+          type: string
+          minLength: 1
+      required:
+        - id
+        - title
+        - speaker
+        - affiliation
+        - date
+        - text
+  responses:
+    SearchResult:
+      description: Representation of a result for a specific search query.
+      content:
+        application/json:
+          schema:
+            description: ''
+            type: object
+            x-examples:
+              example-1:
+                total: 12312
+                results:
+                  - doc_id: 5b1b4727-0bb6-49d6-b8f2-401561fc8ebc
+                    score: 0.6782134
+            properties:
+              total:
+                type: integer
+                description: Indicates the total amount of results.
+              results:
+                type: array
+                uniqueItems: true
+                minItems: 1
+                items:
+                  type: object
+                  properties:
+                    doc_id:
+                      type: string
+                      minLength: 1
+                      format: uuid
+                    score:
+                      type: number
+                      format: double
+                      minimum: 0
+                  required:
+                    - doc_id
+                    - score
+            required:
+              - total
+              - results
+tags:
+  - name: index
+  - name: search
