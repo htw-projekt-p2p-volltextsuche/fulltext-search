@@ -19,4 +19,4 @@ object ApiError {
 
 final case class SearchError(search: Search, message: String) extends ApiError
 
-final case class IndexError(speech: Speech, message: String) extends ApiError
+final case class IndexError(speech: Seq[Speech], message: String) extends ApiError

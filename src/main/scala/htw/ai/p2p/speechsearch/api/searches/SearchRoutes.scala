@@ -12,7 +12,7 @@ import org.http4s.dsl.Http4sDsl
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
  */
-class SearchRoutes[F[_]: Sync](searches: Searches[F]) extends Http4sDsl[F] {
+class SearchRoutes[F[_]: Sync](searches: SearchService[F]) extends Http4sDsl[F] {
 
   val routes: HttpRoutes[F] = HttpRoutes.of[F] {
     case req @ POST -> Root / "searches" =>

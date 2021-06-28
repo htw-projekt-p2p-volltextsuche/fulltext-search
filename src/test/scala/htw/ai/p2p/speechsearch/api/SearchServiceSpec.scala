@@ -21,7 +21,7 @@ import org.slf4j.{Logger, LoggerFactory}
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
  */
-class SearchesSpec extends BaseShouldSpec {
+class SearchServiceSpec extends BaseShouldSpec {
 
   private val Logger: Logger = LoggerFactory.getLogger(getClass)
 
@@ -57,7 +57,7 @@ class SearchesSpec extends BaseShouldSpec {
   val server: HttpApp[IO] = {
     val index = Index(Tokenizer(), LocalInvertedIndex())
     val indexRef = Ref[IO].of(index).unsafeRunSync()
-    val searches = Searches.impl[IO](indexRef)
+    val searches = SearchService.impl[IO](indexRef)
     new SearchRoutes(searches).routes.orNotFound
   }
 

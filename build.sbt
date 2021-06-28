@@ -60,12 +60,8 @@ lazy val root: Project = (project in file("."))
       run := (run in Compile).evaluated
     )
   )
-  .dependsOn(core)
   .dependsOn(generated)
   .aggregate(generated)
-
-lazy val core: Project = (project in file("src"))
-  .settings(buildSettings)
 
 lazy val generated = (project in file("generated"))
   .enablePlugins(OpenApiGeneratorPlugin)

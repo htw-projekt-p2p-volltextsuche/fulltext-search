@@ -11,14 +11,14 @@ import htw.ai.p2p.speechsearch.domain.model.search.Search
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
  */
-trait Searches[F[_]] {
+trait SearchService[F[_]] {
   def create(search: Search): F[Either[SearchError, SearchResult]]
 }
 
-object Searches {
-  def apply[F[_]](implicit ev: Searches[F]): Searches[F] = ev
+object SearchService {
+  def apply[F[_]](implicit ev: SearchService[F]): SearchService[F] = ev
 
-  def impl[F[_]: Sync](indexRef: Ref[F, Index]): Searches[F] =
+  def impl[F[_]: Sync](indexRef: Ref[F, Index]): SearchService[F] =
     search =>
       for {
         index       <- indexRef.get

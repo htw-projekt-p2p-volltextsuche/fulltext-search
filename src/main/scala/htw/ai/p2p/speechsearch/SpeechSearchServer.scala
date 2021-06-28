@@ -3,8 +3,8 @@ package htw.ai.p2p.speechsearch
 import cats.effect.{ConcurrentEffect, ExitCode, Timer}
 import cats.implicits.toSemigroupKOps
 import fs2.Stream
-import htw.ai.p2p.speechsearch.api.indexes.{IndexRoutes, Indexes}
-import htw.ai.p2p.speechsearch.api.searches.{SearchRoutes, Searches}
+import htw.ai.p2p.speechsearch.api.index.{IndexRoutes, IndexService}
+import htw.ai.p2p.speechsearch.api.searches.{SearchRoutes, SearchService}
 import org.http4s.implicits.http4sKleisliResponseSyntaxOptionT
 import org.http4s.server.Router
 import org.http4s.server.blaze.BlazeServerBuilder
@@ -18,10 +18,10 @@ import scala.concurrent.ExecutionContext.global
 object SpeechSearchServer {
 
   def stream[F[_]: ConcurrentEffect](
-    port: Int,
-    searchAlg: Searches[F],
-    indexAlg: Indexes[F],
-    apiPrefix: String
+                                      port: Int,
+                                      searchAlg: SearchService[F],
+                                      indexAlg: IndexService[F],
+                                      apiPrefix: String
   )(implicit T: Timer[F]): Stream[F, ExitCode] = {
     val httpApp = Router(
       apiPrefix -> (

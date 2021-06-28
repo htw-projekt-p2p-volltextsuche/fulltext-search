@@ -2,8 +2,8 @@ package htw.ai.p2p.speechsearch
 
 import cats.effect._
 import cats.effect.concurrent.Ref
-import htw.ai.p2p.speechsearch.api.indexes.Indexes
-import htw.ai.p2p.speechsearch.api.searches.Searches
+import htw.ai.p2p.speechsearch.api.index.IndexService
+import htw.ai.p2p.speechsearch.api.searches.SearchService
 import htw.ai.p2p.speechsearch.domain._
 import htw.ai.p2p.speechsearch.domain.invertedindex.LocalInvertedIndex
 import htw.ai.p2p.speechsearch.domain.model.speech.Speech
@@ -42,8 +42,8 @@ object SpeechSearchApp extends IOApp {
       seededIndex = samples.foldLeft(index)(_.index(_))
 
       indexRef <- Ref[IO].of(seededIndex)
-      searches = Searches.impl[IO](indexRef)
-      indexes = Indexes.impl[IO](indexRef)
+      searches = SearchService.impl[IO](indexRef)
+      indexes = IndexService.impl[IO](indexRef)
 
       exitCode <-
         SpeechSearchServer

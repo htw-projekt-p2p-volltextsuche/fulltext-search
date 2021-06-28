@@ -10,7 +10,6 @@ servers:
   - url: 'http://localhost:8421/api'
 paths:
   /searches:
-    parameters: [ ]
     post:
       tags:
         - search
@@ -29,7 +28,7 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Search'
-  /indexes:
+  /index/speech:
     post:
       tags:
         - index
@@ -43,30 +42,48 @@ paths:
         '422':
           description: Unprocessable Entity
       description: Include a speech into the inverted index.
-      parameters: [ ]
       requestBody:
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/Speech'
-    parameters: [ ]
+  /index/speeches:
+    post:
+      tags:
+        - index
+      summary: Index multiple speeches
+      operationId: post-speech
+      responses:
+        '200':
+          description: OK
+        '400':
+          description: Bad Request
+        '422':
+          description: Unprocessable Entity
+      description: Include a speech into the inverted index.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Speeches'
 components:
   schemas:
     Search:
       description: This entity represents a search over the indexed documents.
       type: object
-      x-examples:
-        example:
-          search:
-            max_results: 25
-            query:
-              terms: Corona Regeln Juni
-              additions:
-                - connector: or
-                  terms: Covid Rules July
-            filter:
-              - criteria: affiliation
-                value: cdu
+      example:
+        search:
+          max_results: 25
+          query:
+            terms: Corona Regeln Juni
+            additions:
+              - connector: or
+                terms: Covid Rules July
+          filter:
+            - criteria: affiliation
+              value: CDU
+            - criteria: affiliation
+              value: SPD
       properties:
         search:
           type: object
@@ -122,16 +139,15 @@ components:
       required:
         - search
     Speech:
-      description: This entity contains all relevant information related to a single speech
+      description: This entity represents all relevant information related to a single speech
       type: object
-      x-examples:
-        example:
-          id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
-          title: Super interesting speech
-          speaker: someone
-          affiliation: somegroup
-          date: '2019-08-24'
-          text: blah blah blah...
+      example:
+        id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+        title: Super interesting speech
+        speaker: Olaf Scholz
+        affiliation: FDP
+        date: '2019-08-24'
+        text: blah blah blah...
       properties:
         id:
           type: string
@@ -163,6 +179,28 @@ components:
         - affiliation
         - date
         - text
+    Speeches:
+      description: This entity represents a list of speeches
+      type: array
+      items:
+        $ref: '#/components/schemas/Speech'
+      example:
+        - id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+          title: Super interesting speech
+          speaker: Olaf Scholz
+          affiliation: FDP
+          date: '2019-08-24'
+          text: blah blah blah...
+        - id: 497f6eca-6276-9999-bfeb-53cbbbba0000
+          title: Another interesting speech
+          speaker: Angela Merkel
+          affiliation: CDU
+          date: '2019-08-24'
+          text: blah blah blah...
+      properties:
+        items:
+          uniqueItems: true
+          minItems: 1
   responses:
     SearchResult:
       description: Representation of a result for a specific search query.
@@ -171,12 +209,11 @@ components:
           schema:
             description: ''
             type: object
-            x-examples:
-              example-1:
-                total: 12312
-                results:
-                  - doc_id: 5b1b4727-0bb6-49d6-b8f2-401561fc8ebc
-                    score: 0.6782134
+            example:
+              total: 12312
+              results:
+                - doc_id: 5b1b4727-0bb6-49d6-b8f2-401561fc8ebc
+                  score: 0.6782134
             properties:
               total:
                 type: integer
