@@ -15,6 +15,7 @@ project/
 target/
 build/
 *target*
+!project/plugins.sbt
 
 # eclipse
 build
