@@ -1,6 +1,6 @@
 package htw.ai.p2p.speechsearch
 
-import cats.effect.{ConcurrentEffect, ExitCode, Timer}
+import cats.effect.{ConcurrentEffect, ExitCode, _}
 import cats.implicits.toSemigroupKOps
 import fs2.Stream
 import htw.ai.p2p.speechsearch.api.index.{IndexRoutes, IndexService}
@@ -17,16 +17,18 @@ import scala.concurrent.ExecutionContext.global
  */
 object SpeechSearchServer {
 
-  def stream[F[_]: ConcurrentEffect](
-                                      port: Int,
-                                      searchAlg: SearchService[F],
-                                      indexAlg: IndexService[F],
-                                      apiPrefix: String
-  )(implicit T: Timer[F]): Stream[F, ExitCode] = {
+  def stream[F[_] : ConcurrentEffect](
+                                       port: Int,
+                                       searchAlg: SearchService[F],
+                                       indexAlg: IndexService[F],
+                                       apiPrefix: String
+                                     )(implicit T: Timer[F]): Stream[F, ExitCode] = {
     val httpApp = Router(
       apiPrefix -> (
-        new SearchRoutes[F](searchAlg).routes <+> new IndexRoutes[F](indexAlg).routes
-      )
+        new SearchRoutes[F](searchAlg).routes <+> new IndexRoutes[F](
+          indexAlg
+        ).routes
+        )
     ).orNotFound
 
     val appWithMiddleware =

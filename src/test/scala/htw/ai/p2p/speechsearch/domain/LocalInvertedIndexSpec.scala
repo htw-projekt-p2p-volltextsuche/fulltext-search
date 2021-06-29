@@ -1,6 +1,7 @@
 package htw.ai.p2p.speechsearch.domain
 
 import htw.ai.p2p.speechsearch.BaseShouldSpec
+import htw.ai.p2p.speechsearch.TestData.{ValidUuid1, ValidUuid2}
 import htw.ai.p2p.speechsearch.domain.invertedindex._
 import htw.ai.p2p.speechsearch.domain.model.speech._
 
@@ -10,7 +11,7 @@ import htw.ai.p2p.speechsearch.domain.model.speech._
 class LocalInvertedIndexSpec extends BaseShouldSpec {
 
   "A local Inverted Index" should "insert posting when term is not yet known" in {
-    val posting = Posting(DocId("123"), 1, 100)
+    val posting = Posting(DocId(ValidUuid1), 1, 100)
 
     val index = LocalInvertedIndex().insert("test", posting)
 
@@ -19,7 +20,7 @@ class LocalInvertedIndexSpec extends BaseShouldSpec {
   }
 
   it should "also insert with infix alias" in {
-    val posting = Posting(DocId("123"), 1, 100)
+    val posting = Posting(DocId(ValidUuid1), 1, 100)
 
     val index: InvertedIndex = LocalInvertedIndex() :+ ("test" -> posting)
 
@@ -28,7 +29,7 @@ class LocalInvertedIndexSpec extends BaseShouldSpec {
   }
 
   it should "also get with apply alias" in {
-    val posting              = Posting(DocId("123"), 1, 100)
+    val posting = Posting(DocId(ValidUuid1), 1, 100)
     val index: InvertedIndex = LocalInvertedIndex().insert("test", posting)
 
     val result = index("test")
@@ -37,95 +38,83 @@ class LocalInvertedIndexSpec extends BaseShouldSpec {
   }
 
   it should "append posting when term is already present" in {
-    val knownPosting = Posting(DocId("known"), 1, 100)
-    val newPosting   = Posting(DocId("unknown"), 3, 100)
-    val index        = LocalInvertedIndex().insert("test", knownPosting)
+    val knownPosting = Posting(DocId(ValidUuid1), 1, 100)
+    val newPosting = Posting(DocId(ValidUuid2), 3, 100)
+    val index = LocalInvertedIndex()
+      .insert("test", knownPosting)
+      .insert("test", newPosting)
 
-    val newIndex = index.insert("test", newPosting)
+    val result = index.get("test")
 
-    val result = newIndex.get("test")
-    assert(
-      result.contains(newPosting),
-      s"$result does not contain $newPosting"
-    )
-    assert(
-      result.contains(knownPosting),
-      s"$result does not contain $knownPosting"
-    )
+    result should contain allElementsOf List(knownPosting, newPosting)
   }
 
   it should "insert all postings when term is not yet known" in {
     val mappedPostings = Map(
-      "term 1" -> Posting(DocId("first"), 3, 100),
-      "term 2" -> Posting(DocId("second"), 3, 100)
+      "term 1" -> Posting(DocId(ValidUuid1), 3, 100),
+      "term 2" -> Posting(DocId(ValidUuid2), 3, 100)
     )
 
     val index = LocalInvertedIndex().insertAll(mappedPostings)
 
-    assert(index("term 1").contains(mappedPostings("term 1")))
-    assert(index("term 2").contains(mappedPostings("term 2")))
+    index("term 1") should contain only mappedPostings("term 1")
   }
 
   it should "append all postings when terms are already present" in {
-    val knownPosting = Posting(DocId("known"), 1, 100)
-    val newPosting   = Posting(DocId("first"), 3, 100)
+    val knownPosting = Posting(DocId(ValidUuid1), 1, 100)
+    val newPosting = Posting(DocId(ValidUuid2), 3, 100)
     val newPostings = Map(
       "term 1" -> newPosting,
-      "term 2" -> Posting(DocId("second"), 3, 100)
+      "term 2" -> Posting(DocId(ValidUuid1), 3, 100)
     )
     val index = LocalInvertedIndex() :+ ("term 1" -> knownPosting)
 
     val newIndex = index.insertAll(newPostings)
 
     val result = newIndex("term 1")
-    assert(
-      result.contains(newPosting),
-      s"$result does not contain $newPosting"
-    )
-    assert(
-      result.contains(knownPosting),
-      s"$result does not contain $knownPosting"
-    )
+
+    newIndex("term 1") should contain allElementsOf List(knownPosting, newPosting)
   }
 
   it should "allow infix operator for insert all" in {
     val postings = Map(
-      "term 1" -> Posting(DocId("first"), 3, 100),
-      "term 2" -> Posting(DocId("second"), 3, 100)
+      "term 1" -> Posting(DocId(ValidUuid1), 3, 100),
+      "term 2" -> Posting(DocId(ValidUuid2), 3, 100)
     )
 
     val index = LocalInvertedIndex() :++ postings
 
-    assert(index("term 1").nonEmpty)
-    assert(index("term 2").nonEmpty)
+    index("term 1") should not be empty
+    index("term 2") should not be empty
   }
 
   it should "return a map with all terms and their associated postings" in {
     val index = LocalInvertedIndex().insertAll(
       Map(
-        "term 1" -> Posting(DocId("first"), 3, 100),
-        "term 2" -> Posting(DocId("second"), 3, 100)
+        "term 1" -> Posting(DocId(ValidUuid1), 3, 100),
+        "term 2" -> Posting(DocId(ValidUuid2), 3, 100)
       )
     )
 
     val result = index.getAll(List("term 1", "term 2"))
 
-    assert(result("term 1").nonEmpty)
-    assert(result("term 2").nonEmpty)
+    result("term 1") should not be empty
+    result("term 2") should not be empty
   }
 
   it should "return empty list when trying to get unknown keys" in {
     val result = LocalInvertedIndex().getAll(List("unknown"))
 
-    assert(result("unknown").isEmpty)
+    result("unknown") shouldBe empty
   }
 
   it should "still return all known terms if another unknown key is given" in {
-    val index = LocalInvertedIndex() :+ "known" -> Posting(DocId("known"), 3, 100)
+    val index =
+      LocalInvertedIndex() :+ "known" -> Posting(DocId(ValidUuid1), 3, 100)
 
     val result = index.getAll(List("known", "unknown"))
 
-    assert(result.size === 2)
-    assert(result("known").nonEmpty)
+    result.size shouldBe 2
+    result("known") should not be empty
   }
 }

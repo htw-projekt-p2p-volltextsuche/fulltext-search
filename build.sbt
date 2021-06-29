@@ -1,4 +1,4 @@
-import sbt.addCompilerPlugin
+
 
 val BetterMonadicForVersion  = "0.3.1"
 val CatsEffectTestingVersion = "0.5.3"
@@ -68,10 +68,10 @@ lazy val generated = (project in file("generated"))
   .settings(
     buildSettings ++ Seq(
       openApiInputSpec := "docs/openapi.yaml",
-      openApiOutputDir := "docs/target/generated",
+      openApiOutputDir := ".",
       openApiGeneratorName := "html2",
       openApiGenerateApiDocumentation := SettingEnabled,
-      openApiValidateSpec := SettingEnabled,
+      openApiValidateSpec := SettingDisabled,
       openApiGenerateModelDocumentation := SettingEnabled,
       openApiGenerateModelTests := SettingDisabled
     )

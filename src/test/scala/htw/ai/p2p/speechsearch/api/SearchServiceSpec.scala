@@ -3,7 +3,7 @@ package htw.ai.p2p.speechsearch.api
 import cats.effect.IO
 import cats.effect.concurrent.Ref
 import htw.ai.p2p.speechsearch.BaseShouldSpec
-import htw.ai.p2p.speechsearch.TestData.entireSearch
+import htw.ai.p2p.speechsearch.TestData.EntireSearch
 import htw.ai.p2p.speechsearch.TestUtils.readFile
 import htw.ai.p2p.speechsearch.api.searches._
 import htw.ai.p2p.speechsearch.domain._
@@ -26,13 +26,13 @@ class SearchServiceSpec extends BaseShouldSpec {
   private val Logger: Logger = LoggerFactory.getLogger(getClass)
 
   "The Route /searches" should "return status code 200 for valid search" in {
-    val response = postSearch(entireSearch.asJson)
+    val response = postSearch(EntireSearch.asJson)
 
     response.status shouldBe Status.Ok
   }
 
   it should "return valid SearchResult" in {
-    val searchResult = postSearch(entireSearch.asJson).as[SearchResult]
+    val searchResult = postSearch(EntireSearch.asJson).as[SearchResult]
 
     searchResult.asserting { result =>
       result.results shouldBe empty
