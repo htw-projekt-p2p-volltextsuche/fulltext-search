@@ -5,16 +5,14 @@ import cats.effect.concurrent.Ref
 import htw.ai.p2p.speechsearch.api.index.IndexService
 import htw.ai.p2p.speechsearch.api.searches.SearchService
 import htw.ai.p2p.speechsearch.domain._
-import htw.ai.p2p.speechsearch.domain.invertedindex.LocalInvertedIndex
+import htw.ai.p2p.speechsearch.domain.invertedindex._
 import htw.ai.p2p.speechsearch.domain.model.speech.Speech
 import htw.ai.p2p.speechsearch.domain.model.speech.Speech._
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import io.circe.jawn._
 
-import java.util.UUID
 import scala.io.Source.fromResource
-import scala.util.matching.Regex
 
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
@@ -37,7 +35,7 @@ object SpeechSearchApp extends IOApp {
       logger       <- Slf4jLogger.create[IO]
       stopWords    <- readStopWords(StopWordsResourceName, logger)
       tokenizer     = Tokenizer(stopWords)
-      invertedIndex = LocalInvertedIndex()
+      invertedIndex = DistributedInvertedIndex()
       index         = Index(tokenizer, invertedIndex)
 
       samples    <- readSpeeches("sample_data.json", logger)

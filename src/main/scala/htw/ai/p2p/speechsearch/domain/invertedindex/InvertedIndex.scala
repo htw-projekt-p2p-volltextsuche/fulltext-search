@@ -111,7 +111,6 @@ trait InvertedIndex {
 }
 
 object InvertedIndex {
-
   /**
    * Representation of a list of postings.
    */
