@@ -28,7 +28,8 @@ object Tokenizer {
 
   def apply(stopWords: Set[String]) = new Tokenizer(stopWords)
 
-  private val DelimiterPattern = """(\W+-\W*|\W*-\W+|[\s,.?!:;\\`„‟'")(])+""" r
+  private val DelimiterPattern     = """(\W+-\W*|\W*-\W+|[\s,.?!:;\\`„‟'")(])+""" r
+  private val NormalizationPattern = """[^\wäöüÄÖÜß]+""".r
 
   private val affiliationNormMap: Map[String, String] =
     Set(
@@ -48,8 +49,6 @@ object Tokenizer {
 
   def buildFilterTerm(criteria: FilterCriteria, value: String): String =
     s"${criteria.value}:${normalize(criteria, value.toLowerCase)}"
-
-  private val NormalizationPattern = """[^\wäöüÄÖÜß]+""".r
 
   private def normalize(criteria: FilterCriteria, filterTerm: String) = {
     val normalized = NormalizationPattern.replaceAllIn(filterTerm.toLowerCase, "-")

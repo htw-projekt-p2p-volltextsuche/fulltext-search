@@ -35,7 +35,7 @@ object SpeechSearchApp extends IOApp {
       logger       <- Slf4jLogger.create[IO]
       stopWords    <- readStopWords(StopWordsResourceName, logger)
       tokenizer     = Tokenizer(stopWords)
-      invertedIndex = DistributedInvertedIndex()
+      invertedIndex = DistributedInvertedIndex(new DHTClientProduction())
       index         = Index(tokenizer, invertedIndex)
 
       samples    <- readSpeeches("sample_data.json", logger)

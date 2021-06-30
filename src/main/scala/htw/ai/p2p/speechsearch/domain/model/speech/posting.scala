@@ -1,7 +1,8 @@
 package htw.ai.p2p.speechsearch.domain.model.speech
 
-import io.circe.generic.extras.semiauto.deriveUnwrappedCodec
-import io.circe.{Codec, Decoder, Encoder}
+import htw.ai.p2p.speechsearch.ApplicationConfig._
+import io.circe.Codec
+import io.circe.generic.extras.semiauto.{deriveConfiguredCodec, deriveUnwrappedCodec}
 
 import java.util.UUID
 import scala.util.Try
@@ -25,8 +26,10 @@ object DocId {
 }
 
 object Posting {
-  implicit val postingEncoder: Encoder[Posting] =
+  implicit val postingCodec: Codec[Posting] = deriveConfiguredCodec
+
+  /*implicit val postingEncoder: Encoder[Posting] =
     Encoder.forProduct3("docId", "tf", "docLen")(p => (p.docId, p.tf, p.docLen))
   implicit val postingDecoder: Decoder[Posting] =
-    Decoder.forProduct3("docId", "tf", "docLen")(Posting.apply)
+    Decoder.forProduct3("docId", "tf", "docLen")(Posting.apply)*/
 }

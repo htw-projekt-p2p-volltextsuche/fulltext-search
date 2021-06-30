@@ -1,7 +1,7 @@
 package htw.ai.p2p.speechsearch.domain
 
 import htw.ai.p2p.speechsearch.domain.Tokenizer.buildFilterTerm
-import htw.ai.p2p.speechsearch.domain.invertedindex.{DistributedInvertedIndex, InvertedIndex}
+import htw.ai.p2p.speechsearch.domain.invertedindex.{DHTClientProduction, DistributedInvertedIndex, InvertedIndex}
 import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex._
 import htw.ai.p2p.speechsearch.domain.model.search.FilterCriteria._
 import htw.ai.p2p.speechsearch.domain.model.speech._
@@ -54,7 +54,7 @@ class Index(
 
 object Index {
 
-  def apply(): Index = Index(Tokenizer(), DistributedInvertedIndex())
+  def apply(): Index = Index(Tokenizer(), DistributedInvertedIndex(new DHTClientProduction()))
 
   def apply(t: Tokenizer, ii: InvertedIndex) = new Index(t, ii)
 
