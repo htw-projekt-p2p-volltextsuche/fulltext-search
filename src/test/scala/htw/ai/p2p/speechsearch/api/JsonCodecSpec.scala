@@ -22,7 +22,9 @@ class JsonCodecSpec extends BaseShouldSpec {
 
     val speech = readSpeechFromFile(fileName)
 
-    speech.docId.self shouldBe UUID.fromString("e5b9957b-a94f-4e44-a8a9-291d9ed7c70d")
+    speech.docId.self shouldBe UUID.fromString(
+      "e5b9957b-a94f-4e44-a8a9-291d9ed7c70d"
+    )
   }
 
   it should "encode to JSON from domain and decode back to domain" in {

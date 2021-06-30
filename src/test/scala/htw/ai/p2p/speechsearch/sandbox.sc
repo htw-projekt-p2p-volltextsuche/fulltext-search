@@ -1,5 +1,3 @@
-
-
 //def process(word: String)(regions: Regions): String = ???
 
 //(process andThen process)("hi", Regions(Region()))

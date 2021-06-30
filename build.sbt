@@ -1,5 +1,3 @@
-
-
 val BetterMonadicForVersion  = "0.3.1"
 val CatsEffectTestingVersion = "0.5.3"
 val CirceVersion             = "0.13.0"
@@ -18,6 +16,7 @@ val buildSettings = Defaults.coreDefaultSettings ++ Seq(
   scalaVersion := "2.13.6",
   fork := true,
   scalacOptions ++= Seq(
+    "-target:11",
     "-feature",
     "-deprecation",
     "-unchecked",

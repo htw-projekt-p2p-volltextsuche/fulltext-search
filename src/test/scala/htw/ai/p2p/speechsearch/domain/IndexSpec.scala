@@ -14,7 +14,7 @@ class IndexSpec extends BaseShouldSpec {
     val nextIndex = Index().index(speech)
 
     nextIndex
-      .postings("Bundesfinanzminister")
+      .postings(GermanStemmer("Bundesfinanzminister"))
       .head
       .tf shouldEqual 3
   }

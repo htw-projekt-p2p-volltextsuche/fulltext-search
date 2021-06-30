@@ -17,6 +17,7 @@ class Tokenizer(stopWords: Set[String] = Set.empty) {
       .view
       .filterNot(stopWords contains)
       .filterNot(_ isBlank)
+      .map(GermanStemmer(_))
       .toList
 
 }
@@ -29,25 +30,35 @@ object Tokenizer {
 
   private val DelimiterPattern = """(\W+-\W*|\W*-\W+|[\s,.?!:;\\`„‟'")(])+""" r
 
+  private val affiliationNormMap: Map[String, String] =
+    Set(
+      AffiliationNormalization(
+        norm = "cdu-csu",
+        variations = Set("cdu", "csu")
+      ),
+      AffiliationNormalization(
+        norm = "die-linke",
+        variations = Set("linke")
+      ),
+      AffiliationNormalization(
+        norm = "die-grünen",
+        variations = Set("die-grünen", "bündnis-90", "grüne")
+      )
+    ) flatMap (_ mappings) toMap
+
   def buildFilterTerm(criteria: FilterCriteria, value: String): String =
     s"${criteria.value}:${normalize(criteria, value.toLowerCase)}"
 
-  private val cduCsuSynonyms = Set("cdu", "csu", "cdu/csu") map (_ -> "cdu/csu")
-  private val dieLinkeSynonyms = Set("die-linke", "linke") map (_ -> "die-linke")
-  private val dieGruenenSynonyms = Set(
-    "die-grünen",
-    "bündnis-90/die-grünen",
-    "bündnis-90-die-grünen",
-    "bündnis-90",
-    "grüne"
-  ) map (_ -> "die-grünen")
-  private val affiliationNormMap: Map[String, String] =
-    (cduCsuSynonyms ++ dieLinkeSynonyms ++ dieGruenenSynonyms).toMap
+  private val NormalizationPattern = """[^\wäöüÄÖÜß]+""".r
 
   private def normalize(criteria: FilterCriteria, filterTerm: String) = {
-    val normalized = DelimiterPattern.replaceAllIn(filterTerm.toLowerCase, "-")
+    val normalized = NormalizationPattern.replaceAllIn(filterTerm.toLowerCase, "-")
     if (criteria == Affiliation) affiliationNormMap.getOrElse(normalized, normalized)
     else normalized
+  }
+
+  case class AffiliationNormalization(norm: String, variations: Set[String]) {
+    def mappings: Set[(String, String)] = variations map (_ -> norm)
   }
 
 }

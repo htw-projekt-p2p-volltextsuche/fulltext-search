@@ -22,22 +22,22 @@ object TestUtils {
     readEntityFromFile(fileName)(decode[Search])
 
   def readFile(fileName: String): String =
-    Using(fromResource(fileName))(_.getLines() mkString).getOrFail(fileName)
+    Using(fromResource(fileName))(_.getLines() mkString) getOrFail fileName
 
   def readLineSetFromFile(fileName: String): Set[String] =
-    Using(fromResource(fileName))(_.getLines() toSet).getOrFail(fileName)
+    Using(fromResource(fileName))(_.getLines() toSet) getOrFail fileName
 
   private def readEntityFromFile[A](
-                                     fileName: String
-                                   )(decode: String => Either[Error, A]): A =
-    Using(fromResource(fileName))(_.getLines() mkString)
-      .flatMap(decode(_).toTry)
-      .getOrFail(fileName)
+    fileName: String
+  )(decode: String => Either[Error, A]): A =
+    (Using(fromResource(fileName))(_.getLines() mkString)
+      flatMap (decode(_).toTry)
+      getOrFail fileName)
 
   implicit class TestTry[A](t: Try[A]) {
     def getOrFail(fileName: String): A =
       t.fold(
-        e => fail(s"Reading file '$fileName' as entity failed.", e),
+        e => fail(s"Reading file '$fileName' failed.", e),
         identity
       )
   }

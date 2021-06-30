@@ -18,9 +18,9 @@ class SearcherSpec extends BaseShouldSpec {
   private val speech1 = readSpeechFromFile(
     "speech_carsten_schneider_23_04_2021.json"
   )
-  private val speech2 = readSpeechFromFile("speech_olaf_scholz_23_04_2021.json")
+  private val speech2   = readSpeechFromFile("speech_olaf_scholz_23_04_2021.json")
   private val nextIndex = preparedIndex.index(speech1).index(speech2)
-  private val searcher = Searcher(nextIndex)
+  private val searcher  = Searcher(nextIndex)
 
   "A Searcher" should "intersect results of single coherent query" in {
     val search = Search(Query("Mittwoch Bundesnotbremse"))
