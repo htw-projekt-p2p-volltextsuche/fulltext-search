@@ -3,13 +3,15 @@ package htw.ai.p2p.speechsearch.domain.invertedindex
 import java.util.concurrent.Executors
 
 import cats.effect.{IO, _}
+import htw.ai.p2p.speechsearch.domain.invertedindex.responseDataTypes.{PutResponse, ResponseDTO, ResponseMapDTO}
 import htw.ai.p2p.speechsearch.domain.model.speech.Posting
+import io.circe.Json
+import io.circe.literal._
+import io.circe.syntax._
+import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.client.{Client, JavaNetClientBuilder}
 import org.http4s.implicits._
-import org.http4s._
-
-import io.circe.syntax._
 
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -95,30 +97,25 @@ class DHTClientProduction extends DHTClient {
   val httpClient: Client[IO] = JavaNetClientBuilder[IO](blocker).create
 
   def get(key: String): String = {
-    val getRequest = Request[IO](Method.GET, uri"https://localhost:8090/" / key)
-    httpClient.expect[String](getRequest)
-    httpClient.run(getRequest).use {
-      case Status.Successful(r) => return r.body.toString();
-      case _ => return "Request failed"
-    }
-    "Request failed"
+    val getRequest = Request[IO](Method.GET, uri"http://localhost:8090/" / key)
+    val response = httpClient.run(getRequest).use {
+      case Status.Successful(r) => r.attemptAs[ResponseDTO].leftMap(_.message).value
+      case r => r.as[Json].map(_ => Left(s"Request failed with status ${r.status.code}"))
+    }.unsafeRunSync()
+    response.fold(_ => json"""{ "error": false,"key": "linux","value": []}""".toString(), _.asJson.toString())
   }
 
   def getMany(terms:  List[String]): String =  {
-    val postRequest = Request[IO](Method.POST, uri"https://localhost:8090/batch-get", headers = Headers.of(Header("Content-Type", "application/json")))
-      .withEntity(s"""{"keys":${terms.asJson}}""")
-    httpClient.run(postRequest).use{
-      case Status.Successful(r) => return r.body.toString();
-      case _ => return "Request failed"
-    }
-    "Request failed"
+    val postRequest = Request[IO](Method.POST, uri"http://localhost:8090/batch-get").withBody(json"""{"keys":${terms.asJson}}""")
+    val response = httpClient.expect[ResponseMapDTO](postRequest).unsafeRunSync()
+    response.asJson.toString()
   }
 
   def post(key: String, data: Posting) = {
     val postRequest =
-      Request[IO](Method.POST, uri"https://localhost:8090/append/" / key, headers = Headers.of(Header("Content-Type", "application/json")))
-        .withEntity(data.asJson)
-    httpClient.run(postRequest)
+      Request[IO](Method.PUT, uri"http://localhost:8090/" / key, headers = Headers.of(Header("Content-Type", "application/json")))
+        .withEntity(json"""{"data":${data.asJson}}""")
+    httpClient.expect[PutResponse](postRequest).unsafeRunSync()
   }
 
   def postMany(entries: Map[String, Posting]) = {

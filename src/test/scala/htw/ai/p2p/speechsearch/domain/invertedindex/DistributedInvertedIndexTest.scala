@@ -3,6 +3,7 @@ package htw.ai.p2p.speechsearch.domain.invertedindex
 import java.util.UUID
 
 import htw.ai.p2p.speechsearch.BaseShouldSpec
+import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex.Term
 import htw.ai.p2p.speechsearch.domain.model.speech.{DocId, Posting}
 
 class DistributedInvertedIndexTest extends BaseShouldSpec {
@@ -21,8 +22,39 @@ class DistributedInvertedIndexTest extends BaseShouldSpec {
     getResult should contain allElementsOf Map(("linux", List(Posting(DocId(ValidUuid1), 1, 100), Posting(DocId(ValidUuid2), 2, 10))), ("windows", List(Posting(DocId(ValidUuid1), 1, 100), Posting(DocId(ValidUuid2), 2, 10))))
   }
 
-  "a distributed index" should "be able tp get multiple posting list even if some keys have no results" in {
+  "a distributed index" should "be able to get multiple posting list even if some keys have no results" in {
     val getResult = dii.getAll(List[String]("testHasResults", "testNoResults"))
     getResult should contain allElementsOf Map(("testHasResults", List(Posting(DocId(ValidUuid1), 1, 100), Posting(DocId(ValidUuid2), 2, 10))), ("testNoResults", List()))
   }
+
+  // These test require the p2p network to be running
+  val diiProd = DistributedInvertedIndex.apply(new DHTClientProduction())
+  "a distributed index with production client" should "put new data" in {
+    diiProd.insert("insertTerm", Posting(DocId(ValidUuid2), 2, 10))
+    val getResult = diiProd.get("insertTerm")
+    getResult should contain (Posting(DocId(ValidUuid2), 2, 10))
+  }
+
+  "a distributed index with production client" should "put multiple new data" in {
+    diiProd.insertAll(Map("insertMultipleTerm1" -> Posting(DocId(ValidUuid2), 2, 10), "insertMultipleTerm2" -> Posting(DocId(ValidUuid1), 1, 10)))
+    val getResult: Map[Term, InvertedIndex.PostingList] = diiProd.getAll(List("insertMultipleTerm1","insertMultipleTerm2"))
+    getResult("insertMultipleTerm1") should contain (Posting(DocId(ValidUuid2), 2, 10))
+    getResult("insertMultipleTerm2") should contain (Posting(DocId(ValidUuid1), 1, 10))
+  }
+
+  "a distributed index with production client" should "get single posting list" in {
+    val getResult = diiProd.get("notFindable")
+    getResult should contain allElementsOf List()
+  }
+
+  /*"a distributed index with production client" should "get single posting list" in {
+  val getResult = diiProd.get("testDoc")
+  getResult should contain allElementsOf List(Posting(DocId(ValidUuid1), 1, 100))
+  }
+
+  "a distributed index with production client" should "get posting list for multiple keys" in {
+  val getResult = diiProd.getAll(List("testDoc", "empty"))
+  getResult should contain allElementsOf Map("testDoc" -> List(Posting(DocId(ValidUuid1), 1, 100)), "empty" -> Nil)
+  }*/
+
 }
