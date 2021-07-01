@@ -69,7 +69,11 @@ object SpeechSearchApp extends IOApp {
     Resource
       .fromAutoCloseable(IO(fromResource(fileName)))
       .use { source =>
-        IO.fromEither(decode[List[Speech]](source.getLines().mkString))
+        logger.info(
+          s"Sample speeches from file '$fileName' added to the index."
+        ) *> logger.warn(
+          s"The sample data should not be added in production. Make sure to use this only in development!"
+        ) *> IO.fromEither(decode[List[Speech]](source.getLines().mkString))
       }
       .handleErrorWith { e =>
         logger.warn(e)(
