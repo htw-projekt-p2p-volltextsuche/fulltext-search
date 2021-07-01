@@ -59,7 +59,7 @@ lazy val root: Project = (project in file("."))
       run := (run in Compile).evaluated
     )
   )
-/*  .dependsOn(generated)
+  .dependsOn(generated)
   .aggregate(generated)
 
 lazy val generated = (project in file("generated"))
@@ -75,4 +75,3 @@ lazy val generated = (project in file("generated"))
       openApiGenerateModelTests := SettingDisabled
     )
   )
-*/

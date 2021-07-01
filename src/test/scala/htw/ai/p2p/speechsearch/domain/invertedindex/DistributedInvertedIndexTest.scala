@@ -29,32 +29,35 @@ class DistributedInvertedIndexTest extends BaseShouldSpec {
 
   // These test require the p2p network to be running
   val diiProd = DistributedInvertedIndex.apply(new DHTClientProduction())
-  "a distributed index with production client" should "put new data" in {
+
+  behavior of "a distributed index with production client"
+
+  ignore should "put new data" in {
     diiProd.insert("insertTerm", Posting(DocId(ValidUuid2), 2, 10))
     val getResult = diiProd.get("insertTerm")
     getResult should contain (Posting(DocId(ValidUuid2), 2, 10))
   }
 
-  "a distributed index with production client" should "put multiple new data" in {
+  ignore should "put multiple new data" in {
     diiProd.insertAll(Map("insertMultipleTerm1" -> Posting(DocId(ValidUuid2), 2, 10), "insertMultipleTerm2" -> Posting(DocId(ValidUuid1), 1, 10)))
     val getResult: Map[Term, InvertedIndex.PostingList] = diiProd.getAll(List("insertMultipleTerm1","insertMultipleTerm2"))
     getResult("insertMultipleTerm1") should contain (Posting(DocId(ValidUuid2), 2, 10))
     getResult("insertMultipleTerm2") should contain (Posting(DocId(ValidUuid1), 1, 10))
   }
 
-  "a distributed index with production client" should "get single posting list" in {
+  ignore should "get single posting list" in {
     val getResult = diiProd.get("notFindable")
     getResult should contain allElementsOf List()
   }
 
-  /*"a distributed index with production client" should "get single posting list" in {
+  ignore should "get single posting list 2" in {
   val getResult = diiProd.get("testDoc")
   getResult should contain allElementsOf List(Posting(DocId(ValidUuid1), 1, 100))
   }
 
-  "a distributed index with production client" should "get posting list for multiple keys" in {
-  val getResult = diiProd.getAll(List("testDoc", "empty"))
-  getResult should contain allElementsOf Map("testDoc" -> List(Posting(DocId(ValidUuid1), 1, 100)), "empty" -> Nil)
-  }*/
+  ignore should "get posting list for multiple keys" in {
+    val getResult = diiProd.getAll(List("testDoc", "empty"))
+    getResult should contain allElementsOf Map("testDoc" -> List(Posting(DocId(ValidUuid1), 1, 100)), "empty" -> Nil)
+  }
 
 }

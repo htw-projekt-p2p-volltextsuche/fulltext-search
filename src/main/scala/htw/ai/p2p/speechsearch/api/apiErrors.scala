@@ -1,6 +1,6 @@
 package htw.ai.p2p.speechsearch.api
 
-import htw.ai.p2p.speechsearch.ApplicationConfig._
+import htw.ai.p2p.speechsearch.CirceConfig._
 import htw.ai.p2p.speechsearch.domain.model.search.Search
 import htw.ai.p2p.speechsearch.domain.model.speech.Speech
 import io.circe.Codec

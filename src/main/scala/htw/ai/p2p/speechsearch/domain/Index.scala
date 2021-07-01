@@ -26,9 +26,9 @@ class Index(
     new Index(tokenizer, ii :++ postings ++ filters)
   }
 
-  def postings(term: Term): PostingList = ii(term.toLowerCase)
+  def postings(term: Term): List[Posting] = ii(term.toLowerCase)
 
-  def postings(terms: List[Term]): Map[Term, PostingList] =
+  def postings(terms: List[Term]): Map[Term, List[Posting]] =
     ii getAll (terms map (_.toLowerCase))
 
   def size: Int = ii.size // TODO: optimize
@@ -54,10 +54,7 @@ class Index(
 
 object Index {
 
-  def apply(): Index = Index(
-    Tokenizer(),
-    DistributedInvertedIndex(new DHTClientProduction())
-  )
+  def apply(): Index = Index(Tokenizer(), LocalInvertedIndex())
 
   def apply(t: Tokenizer, ii: InvertedIndex) = new Index(t, ii)
 

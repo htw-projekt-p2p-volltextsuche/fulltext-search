@@ -3,8 +3,9 @@ package htw.ai.p2p.speechsearch.domain
 import htw.ai.p2p.speechsearch.domain.Searcher._
 import htw.ai.p2p.speechsearch.domain.Tokenizer.buildFilterTerm
 import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex._
+import htw.ai.p2p.speechsearch.domain.model.result.SearchResult
 import htw.ai.p2p.speechsearch.domain.model.result.SearchResult._
-import htw.ai.p2p.speechsearch.domain.model.result._
+import htw.ai.p2p.speechsearch.domain.model.result.ResultEntry
 import htw.ai.p2p.speechsearch.domain.model.search.Connector._
 import htw.ai.p2p.speechsearch.domain.model.search._
 import htw.ai.p2p.speechsearch.domain.model.speech._
@@ -16,11 +17,12 @@ import scala.annotation.tailrec
  */
 class Searcher(index: Index) {
 
-  val PrioritizedOperators = List(
-    AndNot,
-    And,
-    Or
-  )
+  val PrioritizedOperators =
+    List(
+      AndNot,
+      And,
+      Or
+    )
 
   def search(search: Search): SearchResult = {
     val ii       = retrieveInvertedIndex(search)
@@ -39,7 +41,7 @@ class Searcher(index: Index) {
       .map { case (docId, score) => ResultEntry(docId, score) }
       .toList
 
-    SearchResult(results.size, resultEntries)
+    SearchResult(123, results.size, resultEntries) // TODO
   }
 
   private def retrieveInvertedIndex(search: Search): CachedIndex = {

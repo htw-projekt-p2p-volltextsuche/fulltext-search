@@ -1,6 +1,6 @@
 package htw.ai.p2p.speechsearch.domain.invertedindex.responseDataTypes
 
-import htw.ai.p2p.speechsearch.ApplicationConfig._
+import htw.ai.p2p.speechsearch.CirceConfig._
 import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex.Term
 import htw.ai.p2p.speechsearch.domain.model.speech.Posting
 import io.circe.{Codec, Json}
