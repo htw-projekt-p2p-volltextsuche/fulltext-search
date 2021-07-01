@@ -11,8 +11,7 @@ object DistributedInvertedIndex {
   def apply(client: DHTClient): InvertedIndex = new DistributedInvertedIndex(client)
 }
 
-class DistributedInvertedIndex(client: DHTClient)
-extends InvertedIndex {
+class DistributedInvertedIndex(client: DHTClient) extends InvertedIndex {
 
   override def size: Int = ??? //client.get("size")
 
@@ -26,42 +25,37 @@ extends InvertedIndex {
     this
   }
 
-  override def get(term:  Term): List[Posting] = {
+  override def get(term: Term): List[Posting] =
     decode[ResponseDTO](client.get(term)).fold(
       _ => Nil,
-      _.toDomain()
+      _.toDomain
     )
-  }
 
-  override def getAll(terms:  List[Term]): Map[Term, List[Posting]] = {
+  override def getAll(terms: List[Term]): Map[Term, List[Posting]] =
     decode[ResponseMapDTO](client.getMany(terms)).fold(
       _ => Map.empty,
-      _.toDomain()
+      _.toDomain
     )
-  }
 }
 
-case class ResponseDTO(
-                        error: Boolean,
-                        key: String,
-                        value: List[Posting]) {
-  def toDomain(): List[Posting] = value
+case class ResponseDTO(error: Boolean, key: String, value: List[Posting]) {
+  def toDomain: List[Posting] = value
 }
 
-case class ResponseMapDTO(error: Boolean,
-                          keys: List[String],
-                          values: Json ) {
-  def toDomain(): Map[Term, List[Posting]] = keys.map(key => {
-    val json = values.findAllByKey(key)(0)
-    if(json.findAllByKey("value") != null)
-      (key, decode[PostingListWithoutKey](json.toString()).fold(_ => Nil, _.toDomain()))
+case class ResponseMapDTO(error: Boolean, keys: List[String], values: Json) {
+  def toDomain: Map[Term, List[Posting]] = keys.map { key =>
+    val json = values.findAllByKey(key).head
+    if (json.findAllByKey("value") != null)
+      (
+        key,
+        decode[PostingListWithoutKey](json.toString()).fold(_ => Nil, _.toDomain)
+      )
     else (key, Nil)
-  }).toMap
+  }.toMap
 }
 
-case class PostingListWithoutKey(error: Boolean,
-                                 value: List[Posting]) {
-  def toDomain(): List[Posting] = value
+case class PostingListWithoutKey(error: Boolean, value: List[Posting]) {
+  def toDomain: List[Posting] = value
 }
 
 object ResponseDTO {
@@ -73,5 +67,6 @@ object ResponseMapDTO {
 }
 
 object PostingListWithoutKey {
-  implicit val responsePostingListWithoutKeyCodec: Codec[PostingListWithoutKey] = deriveConfiguredCodec
+  implicit val responsePostingListWithoutKeyCodec: Codec[PostingListWithoutKey] =
+    deriveConfiguredCodec
 }

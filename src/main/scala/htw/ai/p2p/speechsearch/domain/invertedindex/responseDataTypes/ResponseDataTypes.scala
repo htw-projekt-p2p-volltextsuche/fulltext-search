@@ -7,27 +7,23 @@ import io.circe.{Codec, Json}
 import io.circe.generic.extras.semiauto.deriveConfiguredCodec
 import io.circe.parser.decode
 
-
-case class ResponseDTO(
-                        error: Boolean,
-                        key: String,
-                        value: List[Posting]) {
+case class ResponseDTO(error: Boolean, key: String, value: List[Posting]) {
   def toDomain(): List[Posting] = value
 }
 
-case class ResponseMapDTO(error: Boolean,
-                          keys: List[String],
-                          values: Json ) {
-  def toDomain(): Map[Term, List[Posting]] = keys.map(key => {
+case class ResponseMapDTO(error: Boolean, keys: List[String], values: Json) {
+  def toDomain(): Map[Term, List[Posting]] = keys.map { key =>
     val json = values.findAllByKey(key)(0)
-    if(json.findAllByKey("value") != null)
-      (key, decode[PostingListWithoutKey](json.toString()).fold(_ => Nil, _.toDomain()))
+    if (json.findAllByKey("value") != null)
+      (
+        key,
+        decode[PostingListWithoutKey](json.toString()).fold(_ => Nil, _.toDomain())
+      )
     else (key, Nil)
-  }).toMap
+  }.toMap
 }
 
-case class PostingListWithoutKey(error: Boolean,
-                                 value: List[Posting]) {
+case class PostingListWithoutKey(error: Boolean, value: List[Posting]) {
   def toDomain(): List[Posting] = value
 }
 
@@ -42,9 +38,10 @@ object ResponseMapDTO {
 }
 
 object PostingListWithoutKey {
-  implicit val responsePostingListWithoutKeyCodec: Codec[PostingListWithoutKey] = deriveConfiguredCodec
+  implicit val responsePostingListWithoutKeyCodec: Codec[PostingListWithoutKey] =
+    deriveConfiguredCodec
 }
 
 object PutResponse {
-  implicit val putResponse : Codec[PutResponse] = deriveConfiguredCodec
+  implicit val putResponse: Codec[PutResponse] = deriveConfiguredCodec
 }
