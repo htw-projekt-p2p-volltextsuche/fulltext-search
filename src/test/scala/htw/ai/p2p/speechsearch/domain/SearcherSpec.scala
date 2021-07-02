@@ -91,6 +91,20 @@ class SearcherSpec extends BaseShouldSpec {
     results.total shouldBe 2
   }
 
+  it should "ignore blank filter values" in {
+    val search = Search(
+      query = Query("Mittwoch"),
+      filter = List(
+        QueryFilter(criteria = FilterCriteria.Affiliation, value = ""),
+        QueryFilter(criteria = FilterCriteria.Speaker, value = "    ")
+      )
+    )
+
+    val results = searcher.search(search)
+
+    results.total should be > 0
+  }
+
 }
 
 object SearcherSpec {
