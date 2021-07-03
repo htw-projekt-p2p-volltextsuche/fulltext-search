@@ -22,7 +22,7 @@ Environment variables need to be prefixed by `CONFIG_FORCE_` except there is an 
 **They will be evaluated in following order** (starting from the highest priority):
 
 1. Environment variable:               `export CONFIG_FORCE_SERVER_HOST="0.0.0.0"`
-2. Java system property as argument:   `sbt -Dserver.host="0.0.0.0" run`
+2. Java system property as argument:   `sbt '; set javaOptions += "-Dserver.host="0.0.0.0""; run'`
 3. *application.conf*:                 `server { host = 0.0.0.0 }`
 
 #### Configuration properties
