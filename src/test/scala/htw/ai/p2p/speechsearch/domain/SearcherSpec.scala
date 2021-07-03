@@ -105,6 +105,20 @@ class SearcherSpec extends BaseShouldSpec {
     results.total should be > 0
   }
 
+  it should "combine filters of same type with OR among themselves" in {
+    val search = Search(
+      query = Query("Mittwoch"),
+      filter = List(
+        QueryFilter(criteria = FilterCriteria.Affiliation, value = "spd"),
+        QueryFilter(criteria = FilterCriteria.Affiliation, value = "fdp")
+      )
+    )
+
+    val results = searcher.search(search)
+
+    results.total shouldBe 2
+  }
+
 }
 
 object SearcherSpec {

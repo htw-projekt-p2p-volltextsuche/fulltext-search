@@ -9,6 +9,7 @@ import htw.ai.p2p.speechsearch.domain.model.search.Connector._
 import htw.ai.p2p.speechsearch.domain.model.search._
 import htw.ai.p2p.speechsearch.domain.model.speech._
 
+import scala.::
 import scala.annotation.tailrec
 
 /**
@@ -98,8 +99,13 @@ class Searcher(index: Index) {
   private def applyFilter(
     filter: List[QueryFilter]
   )(chunkResult: PartialResult, ii: CachedIndex): PartialResult =
-    // TODO: combine filters of same type and connect them with OR
-    filter filterNot (_.value.isBlank) map (retrieveFilterSet(_, ii)) match {
+    filter
+      .filterNot(_.value.isBlank)
+      .groupMapReduce(_.criteria)(retrieveFilterSet(_, ii))((a, b) =>
+        connect(Or)(List(a, b))
+      )
+      .values
+      .toList match {
       case Nil        => chunkResult
       case filterSets => connect(And)(chunkResult :: filterSets)
     }

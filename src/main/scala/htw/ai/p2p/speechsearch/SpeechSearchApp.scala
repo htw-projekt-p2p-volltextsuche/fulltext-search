@@ -2,6 +2,7 @@ package htw.ai.p2p.speechsearch
 
 import cats.effect._
 import cats.effect.concurrent.Ref
+import cats.implicits.catsSyntaxApplicativeId
 import htw.ai.p2p.speechsearch.api.index.IndexService
 import htw.ai.p2p.speechsearch.api.searches.SearchService
 import htw.ai.p2p.speechsearch.config.SpeechSearchConfig._
@@ -70,6 +71,11 @@ object SpeechSearchApp extends IOApp {
             policy = DhtRetryPolicy,
             onError = handleDhtConnectionErrors
           )
+          .flatMap(
+            Logger[IO].info(
+              s"Successfully connected to P2P network via entrypoint '${config.index.dhtUri}"
+            ) *> IO.pure(_)
+          )
     }
 
   private def handleDhtConnectionErrors(e: Throwable, details: RetryDetails) =
@@ -80,7 +86,7 @@ object SpeechSearchApp extends IOApp {
         )
       case GivingUp(totalRetries, _) =>
         Logger[IO].error(e)(
-          s"Failed to connect to P2P network $totalRetries. Giving up." +
+          s"Failed to connect to P2P network after $totalRetries. Giving up." +
             s"Please verify that 'index.dhtUri' is configured properly and the dht service is accessible."
         )
     }

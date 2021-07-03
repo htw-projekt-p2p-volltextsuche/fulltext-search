@@ -1,14 +1,12 @@
 package htw.ai.p2p.speechsearch.domain.invertedindex
 
-import java.util.UUID
 import htw.ai.p2p.speechsearch.BaseShouldSpec
+import htw.ai.p2p.speechsearch.TestData._
 import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex.Term
 import htw.ai.p2p.speechsearch.domain.model.speech.{DocId, Posting}
 import org.http4s.implicits.http4sLiteralsSyntax
 
 class DistributedInvertedIndexTest extends BaseShouldSpec {
-  val ValidUuid1: UUID = UUID.fromString("b272829e-f15b-44fe-8c25-25e3eff45300")
-  val ValidUuid2: UUID = UUID.fromString("32271a61-5c42-452f-8d59-7a2323c88bff")
 
   val dii = DistributedInvertedIndex.apply(new DHTClientTest())
 
