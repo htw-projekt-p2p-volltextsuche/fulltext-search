@@ -1,6 +1,6 @@
 package htw.ai.p2p.speechsearch.domain.model.search
 
-import htw.ai.p2p.speechsearch.CirceConfig._
+import htw.ai.p2p.speechsearch.config.CirceConfig._
 import htw.ai.p2p.speechsearch.domain.model.search.Search.MaxResultsDefault
 import io.circe._
 import io.circe.generic.extras.auto._

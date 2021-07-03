@@ -1,4 +1,4 @@
-package htw.ai.p2p.speechsearch
+package htw.ai.p2p.speechsearch.config
 
 import io.circe.generic.extras.Configuration
 

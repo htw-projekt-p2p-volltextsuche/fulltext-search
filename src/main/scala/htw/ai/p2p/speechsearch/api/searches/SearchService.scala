@@ -1,6 +1,6 @@
 package htw.ai.p2p.speechsearch.api.searches
 
-import cats.effect.Sync
+import cats.effect._
 import cats.effect.concurrent.Ref
 import cats.implicits._
 import htw.ai.p2p.speechsearch.api.SearchError

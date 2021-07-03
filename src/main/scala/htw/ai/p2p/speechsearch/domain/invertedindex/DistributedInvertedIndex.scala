@@ -1,6 +1,6 @@
 package htw.ai.p2p.speechsearch.domain.invertedindex
 
-import htw.ai.p2p.speechsearch.CirceConfig._
+import htw.ai.p2p.speechsearch.config.CirceConfig._
 import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex.Term
 import htw.ai.p2p.speechsearch.domain.model.speech.Posting
 import io.circe.generic.extras.semiauto.deriveConfiguredCodec
@@ -13,7 +13,7 @@ object DistributedInvertedIndex {
 
 class DistributedInvertedIndex(client: DHTClient) extends InvertedIndex {
 
-  override def size: Int = ??? //client.get("size")
+  override def size: Int = 42 // TODO -> client.get("size")
 
   override def insert(term: Term, posting: Posting): InvertedIndex = {
     client.post(term, posting)

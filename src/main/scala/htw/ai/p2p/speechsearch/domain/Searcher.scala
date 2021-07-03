@@ -3,9 +3,8 @@ package htw.ai.p2p.speechsearch.domain
 import htw.ai.p2p.speechsearch.domain.Searcher._
 import htw.ai.p2p.speechsearch.domain.Tokenizer.buildFilterTerm
 import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex._
-import htw.ai.p2p.speechsearch.domain.model.result.SearchResult
+import htw.ai.p2p.speechsearch.domain.model.result.{ResultEntry, SearchResult}
 import htw.ai.p2p.speechsearch.domain.model.result.SearchResult._
-import htw.ai.p2p.speechsearch.domain.model.result.ResultEntry
 import htw.ai.p2p.speechsearch.domain.model.search.Connector._
 import htw.ai.p2p.speechsearch.domain.model.search._
 import htw.ai.p2p.speechsearch.domain.model.speech._
@@ -41,7 +40,7 @@ class Searcher(index: Index) {
       .map { case (docId, score) => ResultEntry(docId, score) }
       .toList
 
-    SearchResult(123, results.size, resultEntries) // TODO
+    SearchResult(results.size, resultEntries)
   }
 
   private def retrieveInvertedIndex(search: Search): CachedIndex = {

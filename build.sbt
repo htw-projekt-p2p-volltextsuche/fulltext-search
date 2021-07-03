@@ -1,11 +1,13 @@
 val BetterMonadicForVersion  = "0.3.1"
 val CatsEffectTestingVersion = "0.5.3"
+val CatsRetryVersion         = "2.1.1"
 val CirceVersion             = "0.13.0"
 val EnumeratumCirceVersion   = "1.6.1"
 val Http4sVersion            = "0.21.24"
 val KindProjectorVersion     = "0.10.3"
 val LogbackVersion           = "1.2.3"
 val Log4CatsVersion          = "1.1.1"
+val PureConfigVersion        = "0.14.1"
 val ScalaTestVersion         = "3.2.7"
 val SvmSubsVersion           = "20.2.0"
 
@@ -22,7 +24,8 @@ val buildSettings = Defaults.coreDefaultSettings ++ Seq(
     "-unchecked",
     "-language:postfixOps",
     "-language:higherKinds",
-    "Ymacro-annotations"
+    "-Dconfig.override_with_env_vars=true",
+    "-Ymacro-annotations"
   ),
   libraryDependencies ++= Seq(
     "org.http4s" %% "http4s-blaze-server",
@@ -38,10 +41,16 @@ val buildSettings = Defaults.coreDefaultSettings ++ Seq(
     "io.circe" %% "circe-literal"
   ) map (_ % CirceVersion),
   libraryDependencies ++= Seq(
+    "com.github.pureconfig" %% "pureconfig",
+    "com.github.pureconfig" %% "pureconfig-cats-effect",
+    "com.github.pureconfig" %% "pureconfig-http4s"
+  ) map (_ % PureConfigVersion),
+  libraryDependencies ++= Seq(
     "ch.qos.logback"     % "logback-classic"  % LogbackVersion,
+    "com.beachape"      %% "enumeratum-circe" % EnumeratumCirceVersion,
+    "com.github.cb372"  %% "cats-retry"       % CatsRetryVersion,
     "io.chrisdavenport" %% "log4cats-slf4j"   % Log4CatsVersion,
-    "org.scalameta"     %% "svm-subs"         % SvmSubsVersion,
-    "com.beachape"      %% "enumeratum-circe" % EnumeratumCirceVersion
+    "org.scalameta"     %% "svm-subs"         % SvmSubsVersion
   ),
   libraryDependencies += scalaVersion("org.scala-lang" % "scala-reflect" % _).value,
   libraryDependencies ++= Seq(

@@ -1,7 +1,5 @@
 package htw.ai.p2p.speechsearch.domain.invertedindex
 
-import java.util.concurrent.Executors
-
 import cats.effect.{IO, _}
 import htw.ai.p2p.speechsearch.domain.invertedindex.responseDataTypes.{
   PutResponse,
@@ -15,8 +13,8 @@ import io.circe.syntax._
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.client.{Client, JavaNetClientBuilder}
-import org.http4s.implicits._
 
+import java.util.concurrent.{ExecutorService, Executors}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 sealed trait Resp
@@ -30,6 +28,11 @@ trait DHTClient {
   def post(key: String, data: Posting): Unit
 
   def postMany(entries: Map[String, Posting]): Unit
+}
+
+object DHTClient {
+  def apply(uri: Uri): DHTClient =
+    new DHTClientProduction(uri)
 }
 
 class DHTClientTest extends DHTClient {
@@ -90,15 +93,15 @@ class DHTClientTest extends DHTClient {
   override def postMany(entries: Map[String, Posting]): Unit = ???
 }
 
-class DHTClientProduction extends DHTClient {
+class DHTClientProduction(uri: Uri) extends DHTClient {
   implicit val cs: ContextShift[IO] = IO.contextShift(global)
 
-  val blockingPool           = Executors.newFixedThreadPool(5)
-  val blocker                = Blocker.liftExecutorService(blockingPool)
-  val httpClient: Client[IO] = JavaNetClientBuilder[IO](blocker).create
+  val blockingPool: ExecutorService = Executors.newFixedThreadPool(5)
+  val blocker: Blocker              = Blocker.liftExecutorService(blockingPool)
+  val httpClient: Client[IO]        = JavaNetClientBuilder[IO](blocker).create
 
   def get(key: String): String = {
-    val getRequest = Request[IO](Method.GET, uri"http://localhost:8090/" / key)
+    val getRequest = Request[IO](Method.GET, uri / key)
     val response = httpClient
       .run(getRequest)
       .use {
@@ -115,7 +118,7 @@ class DHTClientProduction extends DHTClient {
   }
 
   def getMany(terms: List[String]): String = {
-    val postRequest = Request[IO](Method.POST, uri"http://localhost:8090/batch-get")
+    val postRequest = Request[IO](Method.POST, uri / "batch-get")
       .withEntity(json"""{"keys":${terms.asJson}}""")
     val response = httpClient.expect[ResponseMapDTO](postRequest).unsafeRunSync()
     response.asJson.toString()
@@ -125,7 +128,7 @@ class DHTClientProduction extends DHTClient {
     val postRequest =
       Request[IO](
         Method.PUT,
-        uri"http://localhost:8090/" / key,
+        uri / key,
         headers = Headers.of(Header("Content-Type", "application/json"))
       )
         .withEntity(json"""{"data":${data.asJson}}""")

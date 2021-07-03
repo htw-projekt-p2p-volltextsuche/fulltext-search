@@ -1,11 +1,11 @@
 package htw.ai.p2p.speechsearch.domain.invertedindex.responseDataTypes
 
-import htw.ai.p2p.speechsearch.CirceConfig._
+import htw.ai.p2p.speechsearch.config.CirceConfig._
 import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex.Term
 import htw.ai.p2p.speechsearch.domain.model.speech.Posting
-import io.circe.{Codec, Json}
 import io.circe.generic.extras.semiauto.deriveConfiguredCodec
 import io.circe.parser.decode
+import io.circe.{Codec, Json}
 
 case class ResponseDTO(error: Boolean, key: String, value: List[Posting]) {
   def toDomain(): List[Posting] = value
