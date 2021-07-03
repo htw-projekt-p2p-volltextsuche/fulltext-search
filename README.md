@@ -11,12 +11,31 @@ $ cd fulltext-search
 $ sbt run
 ```
 
-### Configure HTTP-Port
+### Configure the App
 
-The HTTP port defaults to **8421**.
+The application configuration can be specified in *src/main/resources/application.conf*
+in [HOCON](https://github.com/lightbend/config/blob/master/HOCON.md#hocon-human-optimized-config-object-notation)
+notation. It's also possible to override the *application.conf* by java system properties or environment variables.
 
-It can be configured at startup by passing it to `sbt run [PORT]`
-or by setting the environment variable *HTTP_PORT*.
+Environment variables need to be prefixed by `CONFIG_FORCE_` except there is an *env-alias* specified for the property.
+
+**They will be evaluated in following order** (starting from the highest priority):
+
+1. Environment variable:               `export CONFIG_FORCE_SERVER_HOST="0.0.0.0"`
+2. Java system property as argument:   `sbt -Dserver.host="0.0.0.0" run`
+3. *application.conf*:                 `server { host = 0.0.0.0 }`
+
+#### Configuration properties
+
+| identifier | description | env-alias | default |
+|------------|------------:|----------:|--------:|
+|server.port|HTTP port of the service|HTTP_PORT|8421|
+|server.host|Host of the service|-|0.0.0.0|
+|index.storage|Storage policy for the inverted index|INDEX_STORAGE_POLICY|local|
+|index.dht-uri|Entrypoint to the DHT|-|http://localhost:8090/|
+|index.stop-words-location|File name of the stopwords resource|-|stopwords_de.txt|
+|index.sample-speeches-location|File name of the sample speeches resource|-|sample_speeches.json|
+|index.insert-sample-speeches|Inserts sample speeches on startup when set|-|false|
 
 ### Run tests
 
@@ -40,11 +59,11 @@ The simplest possible search request has following form:
 
 ```json
 {
-   "search": {
-      "query": {
-         "terms": "your query here..."
-      }
-   }
+  "search": {
+    "query": {
+      "terms": "your query here..."
+    }
+  }
 }
  ```
 
@@ -55,21 +74,21 @@ terms.
 
 ```json
 {
-   "search": {
-      "query": {
-         "terms": "find this ...",
-         "additions": [
-            {
-               "connector": "or",
-               "terms": "... or that ..."
-            },
-            {
-               "connector": "and_not",
-               "terms": "... but not that"
-            }
-         ]
-      }
-   }
+  "search": {
+    "query": {
+      "terms": "find this ...",
+      "additions": [
+        {
+          "connector": "or",
+          "terms": "... or that ..."
+        },
+        {
+          "connector": "and_not",
+          "terms": "... but not that"
+        }
+      ]
+    }
+  }
 }
  ```
 
@@ -77,9 +96,9 @@ terms.
 
 1. First all `terms` fields are evaluated with *AND* in isolation.
 1. The results will then be combined by the specified `connector` and evaluated in the following order:
-   * *AND_NOT*
-   * *AND*
-   * *OR*
+    * *AND_NOT*
+    * *AND*
+    * *OR*
 
 ### Filtered Queries
 
@@ -90,24 +109,24 @@ filters of same type will by combined by *AND* with the actually specified query
 
 ```json
 {
-   "search": {
-      "query": {
-         "terms": "some search"
+  "search": {
+    "query": {
+      "terms": "some search"
+    },
+    "filter": [
+      {
+        "criteria": "affiliation",
+        "value": "SPD"
       },
-      "filter": [
-         {
-            "criteria": "affiliation",
-            "value": "SPD"
-         },
-         {
-            "criteria": "affiliation",
-            "value": "Die Linke"
-         },
-         {
-            "criteria": "speaker",
-            "value": "Peter Lustig"
-         }
-      ]
-   }
+      {
+        "criteria": "affiliation",
+        "value": "Die Linke"
+      },
+      {
+        "criteria": "speaker",
+        "value": "Peter Lustig"
+      }
+    ]
+  }
 }
  ```
