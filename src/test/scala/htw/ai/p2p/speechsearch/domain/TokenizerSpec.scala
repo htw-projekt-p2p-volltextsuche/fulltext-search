@@ -1,7 +1,7 @@
 package htw.ai.p2p.speechsearch.domain
 
 import htw.ai.p2p.speechsearch.BaseShouldSpec
-import htw.ai.p2p.speechsearch.TestData.preparedTokenizer
+import htw.ai.p2p.speechsearch.TestData.TestTokenizer
 import htw.ai.p2p.speechsearch.domain.Tokenizer.buildFilterTerm
 import htw.ai.p2p.speechsearch.domain.model.search.FilterCriteria.Affiliation
 import org.scalatest.prop.TableDrivenPropertyChecks._
@@ -11,7 +11,7 @@ import org.scalatest.prop.TableDrivenPropertyChecks._
  */
 class TokenizerSpec extends BaseShouldSpec {
 
-  private val Tokenizer = preparedTokenizer
+  private val Tokenizer = TestTokenizer
 
   private val SampleText = "ERP steht für Enterprise-Resource-Planning oder " +
     "Unternehmens-Informationssystem, womit alle geschäftsrelevanten " +

@@ -1,24 +1,37 @@
 package htw.ai.p2p.speechsearch.config
 
+import cats.implicits._
 import org.http4s.Uri
+import org.http4s.client.defaults
 import org.http4s.implicits.http4sLiteralsSyntax
-import pureconfig.ConfigReader
-import pureconfig.generic.semiauto.deriveEnumerationReader
+import org.http4s.server.middleware.CORSConfig
+import pureconfig.{ConfigReader, ConvertHelpers}
 import pureconfig.generic.auto._
+import pureconfig.generic.semiauto._
 import pureconfig.module.http4s._
+
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
 
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
  */
 case class SpeechSearchConfig(
   server: Server = Server(),
-  index: Index = Index()
+  index: Index = Index(),
+  peers: Peers = Peers()
 )
 
 object SpeechSearchConfig {
 
   implicit val indexStorageConverter: ConfigReader[IndexStorage] =
     deriveEnumerationReader
+
+  implicit val allowedOriginsConverter: ConfigReader[String => Boolean] =
+    ConfigReader.fromString[String => Boolean] {
+      ConvertHelpers.catchReadError(s =>
+        (a: String) => if (a.matches(s)) true else false
+      )
+    }
 
 }
 
@@ -29,13 +42,30 @@ case object Distributed extends IndexStorage
 case class Server(
   port: Int = 8421,
   host: String = "0.0.0.0",
-  basePath: String = "/api"
+  basePath: String = "/api",
+  logBody: Boolean = true,
+  corsPolicy: CORSConfig = CORSConfig(
+    anyOrigin = true,
+    allowCredentials = true,
+    maxAge = 1.day.toSeconds,
+    anyMethod = false,
+    allowedMethods = Set("POST").some
+  )
 )
 
 case class Index(
   storage: IndexStorage = Local,
-  dhtUri: Uri = uri"http://localhost:8090/",
   stopWordsLocation: String = "stopwords_de.txt",
-  insertSampleSpeeches: Boolean = true,
-  sampleSpeechesLocation: String = "sample_speeches.json"
+  sampleSpeechesLocation: String = "sample_speeches.json",
+  insertSampleSpeeches: Boolean = true
+)
+
+case class Peers(
+  uri: Uri = uri"http://localhost:8090/",
+  logBody: Boolean = true,
+  requestTimeout: FiniteDuration = defaults.RequestTimeout,
+  connectTimeout: FiniteDuration = defaults.ConnectTimeout,
+  chunkBufferMaxSize: Int = 1024 * 1024,
+  bufferSize: Int = 16384,
+  maxWaitQueueLimit: Int = 1024
 )

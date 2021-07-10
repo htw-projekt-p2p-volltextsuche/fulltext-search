@@ -1,7 +1,7 @@
 package htw.ai.p2p.speechsearch.domain
 
 import htw.ai.p2p.speechsearch.domain.Tokenizer._
-import htw.ai.p2p.speechsearch.domain.model.search.FilterCriteria
+import htw.ai.p2p.speechsearch.domain.model.search.{FilterCriteria, Search}
 import htw.ai.p2p.speechsearch.domain.model.search.FilterCriteria.Affiliation
 
 import scala.language.postfixOps
@@ -20,6 +20,17 @@ class Tokenizer(stopWords: Set[String] = Set.empty) {
       .map(GermanStemmer(_))
       .toList
 
+  def extractDistinctTokens(search: Search): List[String] = {
+    val queryTokens = (search.query.terms :: search.query.additions.map(_.terms))
+      .flatMap(apply)
+      .distinct
+    val filterTokens = search.filter
+      .filterNot(_.value.isBlank)
+      .map(filter => buildFilterTerm(filter.criteria, filter.value))
+
+    queryTokens ::: filterTokens
+  }
+
 }
 
 object Tokenizer {
@@ -31,7 +42,7 @@ object Tokenizer {
   private val DelimiterPattern     = """(\W+-\W*|\W*-\W+|[\s,.?!:;\\`„‟'")(])+""" r
   private val NormalizationPattern = """[^\wäöüÄÖÜß]+""".r
 
-  private val affiliationNormMap: Map[String, String] =
+  private val affiliationNorms: Map[String, String] =
     Set(
       AffiliationNormalization(
         norm = "cdu-csu",
@@ -42,7 +53,7 @@ object Tokenizer {
         variations = Set("linke")
       ),
       AffiliationNormalization(
-        norm = "die-grünen",
+        norm = "bündnis-90-die-grünen",
         variations = Set("die-grünen", "bündnis-90", "grüne")
       )
     ) flatMap (_ mappings) toMap
@@ -52,7 +63,7 @@ object Tokenizer {
 
   private def normalize(criteria: FilterCriteria, filterTerm: String) = {
     val normalized = NormalizationPattern.replaceAllIn(filterTerm.toLowerCase, "-")
-    if (criteria == Affiliation) affiliationNormMap.getOrElse(normalized, normalized)
+    if (criteria == Affiliation) affiliationNorms.getOrElse(normalized, normalized)
     else normalized
   }
 

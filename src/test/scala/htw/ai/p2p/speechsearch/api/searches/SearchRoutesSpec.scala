@@ -1,13 +1,11 @@
-package htw.ai.p2p.speechsearch.api
+package htw.ai.p2p.speechsearch.api.searches
 
 import cats.effect.IO
-import cats.effect.concurrent.Ref
 import htw.ai.p2p.speechsearch.BaseShouldSpec
-import htw.ai.p2p.speechsearch.TestData.EntireSearch
+import htw.ai.p2p.speechsearch.SpeechSearchServer.unsafeLogger
+import htw.ai.p2p.speechsearch.TestData._
 import htw.ai.p2p.speechsearch.TestUtils.readFile
-import htw.ai.p2p.speechsearch.api.searches._
 import htw.ai.p2p.speechsearch.domain._
-import htw.ai.p2p.speechsearch.domain.invertedindex.LocalInvertedIndex
 import htw.ai.p2p.speechsearch.domain.model.result.SearchResult
 import io.circe._
 import io.circe.literal.JsonStringContext
@@ -21,7 +19,7 @@ import org.slf4j.{Logger, LoggerFactory}
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
  */
-class SearchServiceSpec extends BaseShouldSpec {
+class SearchRoutesSpec extends BaseShouldSpec {
 
   private val Logger: Logger = LoggerFactory.getLogger(getClass)
 
@@ -54,12 +52,12 @@ class SearchServiceSpec extends BaseShouldSpec {
     a[InvalidMessageBodyFailure] should be thrownBy postSearch(invalidSearch)
   }
 
-  val server: HttpApp[IO] = {
-    val index    = Index(Tokenizer(), LocalInvertedIndex())
-    val indexRef = Ref[IO].of(index).unsafeRunSync()
-    val searches = SearchService.impl[IO](indexRef)
-    new SearchRoutes(searches).routes.orNotFound
-  }
+  val server: IO[HttpApp[IO]] =
+    for {
+      ii      <- TestInvertedIndex
+      searcher = Searcher(TestTokenizer)
+      searches = SearchService.impl[IO](searcher, ii)
+    } yield new SearchRoutes(searches).routes.orNotFound
 
   private[this] def postSearch(json: String): Response[IO] =
     postSearch(parse(json).fold(throw _, identity))
@@ -70,7 +68,7 @@ class SearchServiceSpec extends BaseShouldSpec {
       json
     )
     val postSearch = Request[IO](Method.POST, uri"/searches").withEntity(json)
-    this.server.run(postSearch).unsafeRunSync()
+    this.server.flatMap(_.run(postSearch)).unsafeRunSync()
   }
 
 }

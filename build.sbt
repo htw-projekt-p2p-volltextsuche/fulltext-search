@@ -1,13 +1,16 @@
 val BetterMonadicForVersion  = "0.3.1"
 val CatsEffectTestingVersion = "0.5.3"
+val CatsMtlVersion           = "1.2.0"
 val CatsRetryVersion         = "2.1.1"
 val CirceVersion             = "0.13.0"
 val EnumeratumCirceVersion   = "1.6.1"
 val Http4sVersion            = "0.21.24"
-val KindProjectorVersion     = "0.10.3"
+val KindProjectorVersion     = "0.13.0"
 val LogbackVersion           = "1.2.3"
 val Log4CatsVersion          = "1.1.1"
+val MeowMtlVersion           = "0.4.0"
 val PureConfigVersion        = "0.14.1"
+val ScalaMockVersion         = "5.1.0"
 val ScalaTestVersion         = "3.2.7"
 val SvmSubsVersion           = "20.2.0"
 
@@ -28,23 +31,29 @@ val buildSettings = Defaults.coreDefaultSettings ++ Seq(
     "-Ymacro-annotations"
   ),
   libraryDependencies ++= Seq(
-    "org.http4s" %% "http4s-blaze-server",
-    "org.http4s" %% "http4s-blaze-client",
-    "org.http4s" %% "http4s-circe",
-    "org.http4s" %% "http4s-dsl"
-  ) map (_ % Http4sVersion),
+    "http4s-blaze-server",
+    "http4s-blaze-client",
+    "http4s-circe",
+    "http4s-dsl"
+  ) map ("org.http4s" %% _ % Http4sVersion),
   libraryDependencies ++= Seq(
-    "io.circe" %% "circe-core",
-    "io.circe" %% "circe-generic",
-    "io.circe" %% "circe-parser",
-    "io.circe" %% "circe-generic-extras",
-    "io.circe" %% "circe-literal"
-  ) map (_ % CirceVersion),
+    "circe-core",
+    "circe-generic",
+    "circe-parser",
+    "circe-generic-extras",
+    "circe-literal"
+  ) map ("io.circe" %% _ % CirceVersion),
   libraryDependencies ++= Seq(
-    "com.github.pureconfig" %% "pureconfig",
-    "com.github.pureconfig" %% "pureconfig-cats-effect",
-    "com.github.pureconfig" %% "pureconfig-http4s"
-  ) map (_ % PureConfigVersion),
+    "pureconfig",
+    "pureconfig-cats-effect",
+    "pureconfig-http4s"
+  ) map ("com.github.pureconfig"         %% _          % PureConfigVersion),
+  libraryDependencies += "org.typelevel" %% "cats-mtl" % CatsMtlVersion,
+  libraryDependencies ++= Seq(
+    "meow-mtl-core",
+    "meow-mtl-effects",
+    "meow-mtl-monix"
+  ) map ("com.olegpy" %% _ % MeowMtlVersion),
   libraryDependencies ++= Seq(
     "ch.qos.logback"     % "logback-classic"  % LogbackVersion,
     "com.beachape"      %% "enumeratum-circe" % EnumeratumCirceVersion,
@@ -56,10 +65,13 @@ val buildSettings = Defaults.coreDefaultSettings ++ Seq(
   libraryDependencies ++= Seq(
     "org.scalactic"  %% "scalactic"                     % ScalaTestVersion,
     "org.scalatest"  %% "scalatest"                     % ScalaTestVersion,
+    "org.scalamock"  %% "scalamock"                     % ScalaMockVersion,
     "com.codecommit" %% "cats-effect-testing-scalatest" % CatsEffectTestingVersion
   ) map (_ % Test),
-  addCompilerPlugin("org.typelevel" %% "kind-projector"     % KindProjectorVersion),
-  addCompilerPlugin("com.olegpy"    %% "better-monadic-for" % BetterMonadicForVersion)
+  addCompilerPlugin("com.olegpy" %% "better-monadic-for" % BetterMonadicForVersion),
+  addCompilerPlugin(
+    "org.typelevel" %% "kind-projector" % KindProjectorVersion cross CrossVersion.full
+  )
 )
 
 lazy val root: Project = (project in file("."))

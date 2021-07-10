@@ -1,38 +1,33 @@
 package htw.ai.p2p.speechsearch.domain
 
+import cats.implicits._
 import htw.ai.p2p.speechsearch.domain.Searcher._
 import htw.ai.p2p.speechsearch.domain.Tokenizer.buildFilterTerm
 import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex._
-import htw.ai.p2p.speechsearch.domain.model.result.{ResultEntry, SearchResult}
 import htw.ai.p2p.speechsearch.domain.model.result.SearchResult._
+import htw.ai.p2p.speechsearch.domain.model.result.{ResultEntry, SearchResult}
 import htw.ai.p2p.speechsearch.domain.model.search.Connector._
 import htw.ai.p2p.speechsearch.domain.model.search._
 import htw.ai.p2p.speechsearch.domain.model.speech._
 
-import scala.::
 import scala.annotation.tailrec
 
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
  */
-class Searcher(index: Index) {
+class Searcher(val tokenizer: Tokenizer) {
 
-  val PrioritizedOperators =
-    List(
-      AndNot,
-      And,
-      Or
+  val PrioritizedOperators = List(AndNot, And, Or)
+
+  def search(search: Search, ii: CachedIndex, indexSize: Int): SearchResult = {
+    val queryRes = (Or, processQueryChunk(search.query.terms, ii, tokenizer))
+    val additionalRes = search.query.additions map (c =>
+      c.connector -> processQueryChunk(c.terms, ii, tokenizer)
     )
-
-  def search(search: Search): SearchResult = {
-    val ii       = retrieveInvertedIndex(search)
-    val queryRes = (Or, processQueryChunk(search.query.terms, ii))
-    val additionalRes =
-      search.query.additions map (c => (c.connector, processQueryChunk(c.terms, ii)))
     val connected = connectResults(queryRes :: additionalRes)
     val filtered  = applyFilter(search.filter)(connected, ii)
 
-    val results = computeRelevance(filtered, ii)
+    val results = computeRelevance(filtered, ii, indexSize)
       .groupMapReduce(_._1)(_._2)(_ + _)
       .toSeq
     val resultEntries = results
@@ -44,19 +39,12 @@ class Searcher(index: Index) {
     SearchResult(results.size, resultEntries)
   }
 
-  private def retrieveInvertedIndex(search: Search): CachedIndex = {
-    val queryTokens = (search.query.terms :: search.query.additions.map(_.terms))
-      .flatMap(index.tokenizer(_))
-      .distinct
-    val filterTokens = search.filter
-      .map(filter => buildFilterTerm(filter.criteria, filter.value))
-
-    index postings (queryTokens ::: filterTokens)
-  }
-
-  private def processQueryChunk(query: String, ii: CachedIndex): PartialResult =
-    index
-      .tokenizer(query)
+  private def processQueryChunk(
+    query: String,
+    ii: CachedIndex,
+    tokenizer: Tokenizer
+  ): PartialResult =
+    tokenizer(query)
       .map(term => ii.getOrElse(term, Nil).groupMap(_.docId)(p => (term, p)))
       .reduce((a, b) => a && b)
 
@@ -120,20 +108,22 @@ class Searcher(index: Index) {
 
   private def computeRelevance(
     partial: PartialResult,
-    ii: CachedIndex
+    ii: CachedIndex,
+    indexSize: Int
   ): List[(DocId, Score)] =
     for {
       (docId, result) <- partial.toList
       (term, posting) <- result
-      score            = posting.tf * math.pow(idf(term, ii).getOrElse(0), 2)
+      score            = posting.tf * math.pow(idf(term, ii, indexSize).getOrElse(0), 2)
     } yield docId -> score / norm(posting)
 
   private def norm(posting: Posting): Score = math.pow(1 + posting.docLen, 0.5)
 
-  private def idf(term: Term, ii: CachedIndex): Option[Double] = ii get term map idf
+  private def idf(term: Term, ii: CachedIndex, indexSize: Int): Option[Double] =
+    ii get term map (idf(_, indexSize))
 
-  private def idf(docs: PostingList): Double =
-    1 + math.log(index.size.toDouble / (docs.size.toDouble + 1))
+  private def idf(docs: PostingList, indexSize: Int): Double =
+    1 + math.log(indexSize / (docs.size + 1).toDouble)
 
 }
 
@@ -142,7 +132,7 @@ object Searcher {
   type CachedIndex   = Map[Term, PostingList]
   type PartialResult = Map[DocId, List[(Term, Posting)]]
 
-  def apply(index: Index) = new Searcher(index)
+  def apply(tokenizer: Tokenizer) = new Searcher(tokenizer)
 
   implicit class ConnectableResult(p: PartialResult) {
 

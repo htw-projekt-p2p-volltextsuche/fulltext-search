@@ -1,22 +1,26 @@
-package htw.ai.p2p.speechsearch.api
+package htw.ai.p2p.speechsearch.api.index
 
 import cats.effect.IO
 import cats.effect.concurrent.Ref
+import com.olegpy.meow.hierarchy._
 import htw.ai.p2p.speechsearch.BaseShouldSpec
+import htw.ai.p2p.speechsearch.SpeechSearchServer.unsafeLogger
+import htw.ai.p2p.speechsearch.TestData.TestTokenizer
 import htw.ai.p2p.speechsearch.TestUtils.readSpeechFromFile
-import htw.ai.p2p.speechsearch.api.index.{IndexRoutes, IndexService}
-import htw.ai.p2p.speechsearch.domain.invertedindex.LocalInvertedIndex
+import htw.ai.p2p.speechsearch.api.errors._
+import htw.ai.p2p.speechsearch.domain.Indexer
+import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex._
+import htw.ai.p2p.speechsearch.domain.invertedindex._
 import htw.ai.p2p.speechsearch.domain.model.speech.Speech
-import htw.ai.p2p.speechsearch.domain.{Index, Tokenizer}
 import io.circe.syntax.EncoderOps
 import org.http4s._
-import org.http4s.implicits._
 import org.http4s.circe.jsonEncoder
+import org.http4s.implicits._
 
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
  */
-class IndexServiceSpec extends BaseShouldSpec {
+class IndexRoutesSpec extends BaseShouldSpec {
 
   "The Route /index/speech" should "return status code 200 indexing was successful" in {
     val speech =
@@ -49,11 +53,14 @@ class IndexServiceSpec extends BaseShouldSpec {
     response.status shouldBe Status.Ok
   }
 
-  private val server: HttpApp[IO] = {
-    val index    = Index(Tokenizer(), LocalInvertedIndex())
-    val indexRef = Ref[IO].of(index).unsafeRunSync()
-    val indexes  = IndexService.impl(indexRef)
-    new IndexRoutes(indexes).routes.orNotFound
+  private val server: IO[HttpApp[IO]] = {
+    implicit val eh: HttpErrorHandler[IO, ApiError] = new ApiErrorHandler[IO]
+    for {
+      indexRef <- Ref[IO].of(Map.empty[Term, PostingList])
+      ii        = InvertedIndex.local[IO](indexRef)
+      indexer   = Indexer(TestTokenizer)
+      service   = IndexService.impl[IO](indexer, ii)
+    } yield IndexRoutes.routes(service).orNotFound
   }
 
   private[this] def indexSpeech(speech: Speech): Response[IO] =
@@ -62,13 +69,13 @@ class IndexServiceSpec extends BaseShouldSpec {
   private[this] def indexSpeechAsPlainText(speechJson: String): Response[IO] = {
     val postSpeech =
       Request[IO](Method.POST, uri"/index/speech").withEntity(speechJson)
-    this.server.run(postSpeech).unsafeRunSync()
+    this.server.flatMap(_.run(postSpeech)).unsafeRunSync()
   }
 
   private[this] def indexSpeeches(speeches: List[Speech]): Response[IO] = {
     val postSpeech =
       Request[IO](Method.POST, uri"/index/speeches").withEntity(speeches.asJson)
-    this.server.run(postSpeech).unsafeRunSync()
+    this.server.flatMap(_.run(postSpeech)).unsafeRunSync()
   }
 
 }

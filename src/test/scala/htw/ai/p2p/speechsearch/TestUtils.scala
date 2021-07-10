@@ -1,7 +1,9 @@
 package htw.ai.p2p.speechsearch
 
+import htw.ai.p2p.speechsearch.domain.GermanStemmer
+import htw.ai.p2p.speechsearch.domain.model.result.SearchResult
 import htw.ai.p2p.speechsearch.domain.model.search.Search
-import htw.ai.p2p.speechsearch.domain.model.speech.Speech
+import htw.ai.p2p.speechsearch.domain.model.speech.{DocId, Speech}
 import io.circe._
 import io.circe.jawn.decode
 import org.scalatest.Assertions.fail
@@ -34,11 +36,26 @@ object TestUtils {
       flatMap (decode(_).toTry)
       getOrFail fileName)
 
-  implicit class TestTry[A](t: Try[A]) {
+  implicit class TestTry[A](self: Try[A]) {
+
     def getOrFail(fileName: String): A =
-      t.fold(
+      self.fold(
         e => fail(s"Reading file '$fileName' failed.", e),
         identity
       )
+
   }
+
+  implicit class TestSearchResult(self: SearchResult) {
+
+    def docIds: Seq[DocId] = self.results map (_.docId)
+
+  }
+
+  implicit class TestString(self: String) {
+
+    def stemmed: String = GermanStemmer(self)
+
+  }
+
 }

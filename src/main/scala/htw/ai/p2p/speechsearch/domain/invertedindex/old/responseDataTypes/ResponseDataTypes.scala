@@ -1,4 +1,4 @@
-package htw.ai.p2p.speechsearch.domain.invertedindex.responseDataTypes
+package htw.ai.p2p.speechsearch.domain.invertedindex.old.responseDataTypes
 
 import htw.ai.p2p.speechsearch.config.CirceConfig._
 import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex.Term

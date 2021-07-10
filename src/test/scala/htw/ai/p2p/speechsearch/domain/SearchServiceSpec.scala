@@ -1,41 +1,44 @@
 package htw.ai.p2p.speechsearch.domain
 
+import cats.effect.IO
 import htw.ai.p2p.speechsearch.BaseShouldSpec
-import htw.ai.p2p.speechsearch.TestData.preparedIndex
-import htw.ai.p2p.speechsearch.TestUtils.readSpeechFromFile
-import htw.ai.p2p.speechsearch.domain.SearcherSpec.TestSearchResult
-import htw.ai.p2p.speechsearch.domain.model.result.SearchResult
+import htw.ai.p2p.speechsearch.SpeechSearchServer.unsafeLogger
+import htw.ai.p2p.speechsearch.TestData._
+import htw.ai.p2p.speechsearch.TestUtils.{TestSearchResult, readSpeechFromFile}
+import htw.ai.p2p.speechsearch.api.searches.SearchService
 import htw.ai.p2p.speechsearch.domain.model.search.Connector.AndNot
 import htw.ai.p2p.speechsearch.domain.model.search.FilterCriteria.Affiliation
 import htw.ai.p2p.speechsearch.domain.model.search._
-import htw.ai.p2p.speechsearch.domain.model.speech.DocId
 
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
  */
-class SearcherSpec extends BaseShouldSpec {
+class SearchServiceSpec extends BaseShouldSpec {
 
   private val speech1 = readSpeechFromFile(
     "speech_carsten_schneider_23_04_2021.json"
   )
-  private val speech2   = readSpeechFromFile("speech_olaf_scholz_23_04_2021.json")
-  private val nextIndex = preparedIndex.index(speech1).index(speech2)
-  private val searcher  = Searcher(nextIndex)
+  private val speech2 = readSpeechFromFile("speech_olaf_scholz_23_04_2021.json")
+
+  private val searchService = for {
+    ii      <- seededIndex(speech1, speech2)
+    searcher = Searcher(TestTokenizer)
+  } yield SearchService.impl[IO](searcher, ii)
 
   "A Searcher" should "intersect results of single coherent query" in {
     val search = Search(Query("Mittwoch Bundesnotbremse"))
 
-    val result = searcher.search(search)
-
-    result.docIds should contain only speech2.docId
+    searchService.flatMap(_.create(search)).asserting {
+      _.docIds should contain only speech2.docId
+    }
   }
 
   it should "ignore stop words in a query" in {
     val search = Search(query = Query(terms = "Er soll seine Arbeit machen"))
 
-    val result = searcher.search(search)
-
-    result.docIds should contain only speech1.docId
+    searchService.flatMap(_.create(search)).asserting {
+      _.docIds should contain only speech1.docId
+    }
   }
 
   it should "unite the results of an OR query" in {
@@ -48,9 +51,12 @@ class SearcherSpec extends BaseShouldSpec {
       )
     )
 
-    val result = searcher.search(search)
-
-    result.docIds should contain theSameElementsAs List(speech1.docId, speech2.docId)
+    searchService.flatMap(_.create(search)).asserting {
+      _.docIds should contain theSameElementsAs List(
+        speech1.docId,
+        speech2.docId
+      )
+    }
   }
 
   it should "sort out corresponding results of an AND_NOT query" in {
@@ -58,9 +64,9 @@ class SearcherSpec extends BaseShouldSpec {
       Query("Mittwoch", List(QueryElement(AndNot, "Bundesnotbremse")))
     )
 
-    val result = searcher.search(search)
-
-    result.docIds should contain only speech1.docId
+    searchService.flatMap(_.create(search)).asserting {
+      _.docIds should contain only speech1.docId
+    }
   }
 
   it should "apply filter properly to a query" in {
@@ -74,10 +80,10 @@ class SearcherSpec extends BaseShouldSpec {
       )
     )
 
-    val result = searcher.search(search)
-
-    result.docIds should contain only speech1.docId
-    result.results.head.score should be > 0.0
+    searchService.flatMap(_.create(search)).asserting { result =>
+      result.docIds should contain only speech1.docId
+      result.results.head.score should be > 0.0
+    }
   }
 
   it should "return the correct total count when there are more results than max_results" in {
@@ -86,9 +92,9 @@ class SearcherSpec extends BaseShouldSpec {
       maxResults = 1
     )
 
-    val results = searcher.search(search)
-
-    results.total shouldBe 2
+    searchService.flatMap(_.create(search)).asserting {
+      _.total shouldBe 2
+    }
   }
 
   it should "ignore blank filter values" in {
@@ -100,9 +106,9 @@ class SearcherSpec extends BaseShouldSpec {
       )
     )
 
-    val results = searcher.search(search)
-
-    results.total should be > 0
+    searchService.flatMap(_.create(search)).asserting {
+      _.total should be > 0
+    }
   }
 
   it should "combine filters of same type with OR among themselves" in {
@@ -114,19 +120,9 @@ class SearcherSpec extends BaseShouldSpec {
       )
     )
 
-    val results = searcher.search(search)
-
-    results.total shouldBe 2
-  }
-
-}
-
-object SearcherSpec {
-
-  implicit class TestSearchResult(result: SearchResult) {
-
-    def docIds: Seq[DocId] = result.results map (_.docId)
-
+    searchService.flatMap(_.create(search)).asserting {
+      _.total shouldBe 2
+    }
   }
 
 }

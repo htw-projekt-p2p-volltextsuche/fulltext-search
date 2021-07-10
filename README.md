@@ -31,11 +31,13 @@ Environment variables need to be prefixed by `CONFIG_FORCE_` except there is an 
 |------------|------------:|----------:|--------:|
 |server.port|HTTP port of the service|HTTP_PORT|8421|
 |server.host|Host of the service|-|0.0.0.0|
+|server.log-body|Enables server logging of response bodies|-|true|
 |index.storage|Storage policy for the inverted index|INDEX_STORAGE_POLICY|local|
-|index.dht-uri|Entrypoint to the DHT|-|http://localhost:8090/|
 |index.stop-words-location|File name of the stopwords resource|-|stopwords_de.txt|
 |index.sample-speeches-location|File name of the sample speeches resource|-|sample_speeches.json|
 |index.insert-sample-speeches|Inserts sample speeches on startup when set|-|false|
+|peers.uri|Entrypoint to the P2P network|-|http://localhost:8090/|
+|peers.log-body|Enables client logging of response bodies|-|true|
 
 ### Run tests
 

@@ -1,11 +1,17 @@
 package htw.ai.p2p.speechsearch
 
+import cats.effect.IO
+import cats.effect.concurrent.Ref
+import htw.ai.p2p.speechsearch.SpeechSearchServer.unsafeLogger
 import htw.ai.p2p.speechsearch.TestUtils.readLineSetFromFile
-import htw.ai.p2p.speechsearch.domain.invertedindex.LocalInvertedIndex
+import htw.ai.p2p.speechsearch.api.index.IndexService
+import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex
+import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex.{PostingList, Term}
 import htw.ai.p2p.speechsearch.domain.model.search.Connector.And
 import htw.ai.p2p.speechsearch.domain.model.search.FilterCriteria.Speaker
 import htw.ai.p2p.speechsearch.domain.model.search._
-import htw.ai.p2p.speechsearch.domain.{Index, Tokenizer}
+import htw.ai.p2p.speechsearch.domain.model.speech.Speech
+import htw.ai.p2p.speechsearch.domain.{Indexer, Tokenizer}
 
 import java.util.UUID
 
@@ -29,13 +35,21 @@ object TestData {
     )
   )
 
-  val preparedTokenizer: Tokenizer = Tokenizer(
+  val TestTokenizer: Tokenizer = Tokenizer(
     readLineSetFromFile("stopwords_de.txt")
   )
 
-  val preparedIndex: Index = Index(
-    preparedTokenizer,
-    LocalInvertedIndex()
-  )
+  val TestInvertedIndex: IO[InvertedIndex[IO]] =
+    for {
+      indexRef <- Ref[IO].of(Map.empty[Term, PostingList])
+    } yield InvertedIndex.local[IO](indexRef)
+
+  def seededIndex(speeches: Speech*): IO[InvertedIndex[IO]] =
+    for {
+      ii     <- TestInvertedIndex
+      indexer = Indexer(TestTokenizer)
+      service = IndexService.impl[IO](indexer, ii)
+      _      <- service insert List(speeches: _*)
+    } yield ii
 
 }

@@ -1,7 +1,11 @@
 package htw.ai.p2p.speechsearch.domain.invertedindex
 
+import cats.effect.Sync
+import cats.effect.concurrent.Ref
+import htw.ai.p2p.speechsearch.api.peers.PeerClient
 import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex._
 import htw.ai.p2p.speechsearch.domain.model.speech.Posting
+import io.chrisdavenport.log4cats.Logger
 
 /**
  * Interface for the encapsulation of an inverted index.
@@ -24,62 +28,29 @@ import htw.ai.p2p.speechsearch.domain.model.speech.Posting
  *
  * @author Joscha Seelig <jduesentrieb> 2021
  */
-trait InvertedIndex {
+trait InvertedIndex[F[_]] {
 
   /**
    * Alias for ´get´.
    */
-  def apply(term: Term): PostingList = get(term)
+  def apply(term: Term): F[(Term, PostingList)] = get(term)
 
   /**
    * Alias for `insert`.
    */
-  def :+(entry: (Term, Posting)): InvertedIndex =
+  def :+(entry: (Term, PostingList)): F[Boolean] =
     insert(entry._1, entry._2)
 
   /**
    * Alias for `insertAll`
    */
-  def :++(entries: Map[Term, Posting]): InvertedIndex =
+  def :++(entries: IndexMap): F[Boolean] =
     insertAll(entries)
 
   /**
    * Returns the amount of actually indexed documents.
    */
-  def size: Int
-
-  /**
-   * Adds a Posting into a new `InvertedIndex`
-   * by mapping it to the specified term as key.
-   * The given posting will be appended to the available
-   * postings if the given term is already present.
-   *
-   * @param term    The term to which the posting will
-   *                be appended to.
-   * @param posting The posting that is to be stored
-   *                in the inverted index.
-   * @return A new inverted index updated with the given
-   *         term-posting-pair.
-   */
-  def insert(term: Term, posting: Posting): InvertedIndex
-
-  /**
-   * Adds all specified postings to the associated term
-   * in one batch into a new `InvertedIndex`.
-   * Just as for `insert` each posting will be appended
-   * to an already present `List` of postings if the term
-   * is already known.
-   *
-   * This method should if possible improve the performance
-   * by utilizing the fact that this method handles a batch
-   * of items.
-   *
-   * @param entries A `Map` containing postings mapped
-   *                to a term to which they are associated.
-   * @return A new inverted index updated with the given
-   *         postings.
-   */
-  def insertAll(entries: Map[Term, Posting]): InvertedIndex
+  def size: F[Int]
 
   /**
    * Returns a `List` containing the postings associated
@@ -91,7 +62,7 @@ trait InvertedIndex {
    * @return A `List` containing the requested postings
    *         or an empty one if the term is not present.
    */
-  def get(term: Term): PostingList
+  def get(term: Term): F[(Term, PostingList)]
 
   /**
    * Retrieves all postings that are stored at the given
@@ -107,10 +78,48 @@ trait InvertedIndex {
    *         found mapped to the associated postings or
    *         `Map.empty` if none were found.
    */
-  def getAll(terms: List[Term]): Map[Term, PostingList]
+  def getAll(terms: List[Term]): F[IndexMap]
+
+  /**
+   * Adds a Posting into a new `InvertedIndex`
+   * by mapping it to the specified term as key.
+   * The given posting will be appended to the available
+   * postings if the given term is already present.
+   *
+   * @param term    The term to which the posting will
+   *                be appended to.
+   * @param postings The posting that is to be stored
+   *                in the inverted index.
+   * @return A new inverted index updated with the given
+   *         term-posting-pair.
+   */
+  def insert(term: Term, postings: PostingList): F[Boolean]
+
+  /**
+   * Adds all specified postings to the associated term
+   * in one batch into a new `InvertedIndex`.
+   * Just as for `insert` each posting will be appended
+   * to an already present `List` of postings if the term
+   * is already known.
+   *
+   * This method should if possible improve the performance
+   * by utilizing the fact that this method handles a batch
+   * of items.
+   *
+   * @param entries A `Map` containing postings mapped
+   *                to a term to which they are associated.
+   * @return A Boolean wrapped in
+   */
+  def insertAll(entries: IndexMap): F[Boolean]
+
 }
 
 object InvertedIndex {
+
+  /**
+   * Representation of an in memory inverted index.
+   */
+  type IndexMap = Map[Term, PostingList]
 
   /**
    * Representation of a list of postings.
@@ -121,4 +130,13 @@ object InvertedIndex {
    * Representation of a single search term
    */
   type Term = String
+
+  def apply[F[_]](implicit ev: InvertedIndex[F]): InvertedIndex[F] = ev
+
+  def distributed[F[_]: Sync: Logger](peerClient: PeerClient[F]): InvertedIndex[F] =
+    new DistributedInvertedIndex(peerClient)
+
+  def local[F[_]: Sync](indexRef: Ref[F, IndexMap]): InvertedIndex[F] =
+    new LocalInvertedIndex(indexRef)
+
 }

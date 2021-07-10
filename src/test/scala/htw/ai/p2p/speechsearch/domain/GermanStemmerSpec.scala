@@ -30,8 +30,10 @@ class GermanStemmerSpec extends BaseShouldSpec {
     }
   }
 
-  it should "apply snowball stemming on single word" in {
-    GermanStemmer("bundesfinanzminister") shouldBe "bundesfinanzminist"
+  it should "apply snowball stemming properly" in {
+    GermanStemmer("häuser") shouldBe "haus"
+    GermanStemmer("hauses") shouldBe "haus"
+    GermanStemmer("häuslich") shouldBe "hauslich"
   }
 
   "The GermanStemmerSpec" should "read the test data from file" in {
