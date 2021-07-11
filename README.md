@@ -22,6 +22,7 @@ Environment variables need to be prefixed by `CONFIG_FORCE_` except there is an 
 **They will be evaluated in following order** (starting from the highest priority):
 
 1. Environment variable:               `export CONFIG_FORCE_SERVER_HOST="0.0.0.0"`
+   - **This actually doesn't work!** - use env-alias if defined 
 2. Java system property as argument:   `sbt '; set javaOptions += "-Dserver.host="0.0.0.0""; run'`
 3. *application.conf*:                 `server { host = 0.0.0.0 }`
 
@@ -30,14 +31,14 @@ Environment variables need to be prefixed by `CONFIG_FORCE_` except there is an 
 | identifier | description | env-alias | default |
 |------------|------------:|----------:|--------:|
 |server.port|HTTP port of the service|HTTP_PORT|8421|
-|server.host|Host of the service|-|0.0.0.0|
-|server.log-body|Enables server logging of response bodies|-|true|
+|server.host|Host of the service|SERVER_HOST|0.0.0.0|
+|server.log-body|Enables server logging of response bodies|SERVER_LOG_BODY|true|
 |index.storage|Storage policy for the inverted index|INDEX_STORAGE_POLICY|local|
 |index.stop-words-location|File name of the stopwords resource|-|stopwords_de.txt|
 |index.sample-speeches-location|File name of the sample speeches resource|-|sample_speeches.json|
 |index.insert-sample-speeches|Inserts sample speeches on startup when set|-|false|
 |peers.uri|Entrypoint to the P2P network|-|http://localhost:8090/|
-|peers.log-body|Enables client logging of response bodies|-|true|
+|peers.log-body|Enables client logging of response bodies|PEERS_LOG_BODY|true|
 
 ### Run tests
 

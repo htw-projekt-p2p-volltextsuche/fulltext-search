@@ -73,7 +73,7 @@ object SpeechSearchServer extends IOApp {
       corsApp = CORS(httpApp, config.server.corsPolicy)
       loggingHttpApp =
         ServerLogger
-          .httpApp(logHeaders = config.server.logBody, logBody = true)(corsApp)
+          .httpApp(logHeaders = true, logBody = config.server.logBody)(corsApp)
 
       server <- BlazeServerBuilder(global)
                   .bindHttp(config.server.port, config.server.host)
@@ -115,8 +115,8 @@ object SpeechSearchServer extends IOApp {
       client <- makeClient(config)
       implicit0(c: Client[F]) <- Resource.pure[F, Client[F]] {
                                    ClientLogger(
-                                     logHeaders = config.peers.logBody,
-                                     logBody = true
+                                     logHeaders = true,
+                                     logBody = config.peers.logBody
                                    )(client)
                                  }
       peerClient = PeerClient.impl(config.peers.uri)

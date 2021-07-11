@@ -9,7 +9,7 @@ val KindProjectorVersion     = "0.13.0"
 val LogbackVersion           = "1.2.3"
 val Log4CatsVersion          = "1.1.1"
 val MeowMtlVersion           = "0.4.0"
-val PureConfigVersion        = "0.14.1"
+val PureConfigVersion        = "0.16.0"
 val ScalaMockVersion         = "5.1.0"
 val ScalaTestVersion         = "3.2.7"
 val SvmSubsVersion           = "20.2.0"
@@ -20,6 +20,7 @@ val buildSettings = Defaults.coreDefaultSettings ++ Seq(
   version := "0.0.1-SNAPSHOT",
   scalaVersion := "2.13.6",
   fork := true,
+  javaOptions += "-Dconfig.override_with_env_vars=true",
   scalacOptions ++= Seq(
     "-target:11",
     "-feature",
@@ -27,9 +28,11 @@ val buildSettings = Defaults.coreDefaultSettings ++ Seq(
     "-unchecked",
     "-language:postfixOps",
     "-language:higherKinds",
-    "-Dconfig.override_with_env_vars=true",
     "-Ymacro-annotations"
   ),
+  initialize ~= { _ =>
+    System.setProperty("config.override_with_env_vars", "true")
+  },
   libraryDependencies ++= Seq(
     "http4s-blaze-server",
     "http4s-blaze-client",
@@ -45,7 +48,6 @@ val buildSettings = Defaults.coreDefaultSettings ++ Seq(
   ) map ("io.circe" %% _ % CirceVersion),
   libraryDependencies ++= Seq(
     "pureconfig",
-    "pureconfig-cats-effect",
     "pureconfig-http4s"
   ) map ("com.github.pureconfig"         %% _          % PureConfigVersion),
   libraryDependencies += "org.typelevel" %% "cats-mtl" % CatsMtlVersion,
