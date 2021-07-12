@@ -1,7 +1,7 @@
 package htw.ai.p2p.speechsearch.domain.invertedindex
 
 import cats.effect.concurrent.Ref
-import cats.effect.{Concurrent, Fiber, Sync}
+import cats.effect.{Clock, Concurrent, Fiber, Sync}
 import cats.implicits._
 import htw.ai.p2p.speechsearch.api.peers.PeerClient
 import htw.ai.p2p.speechsearch.domain.ImplicitUtilities.FormalizedString
@@ -10,12 +10,12 @@ import io.chrisdavenport.log4cats.Logger
 import retry.Sleep
 
 import java.time.{Instant, LocalDateTime, ZoneId}
-import scala.concurrent.duration.{DurationLong, FiniteDuration}
+import scala.concurrent.duration.{DurationLong, FiniteDuration, MILLISECONDS}
 
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
  */
-class LazyDistributedInvertedIndex[F[_]: Sync: Concurrent: Sleep: Logger](
+class LazyDistributedInvertedIndex[F[_]: Sync: Concurrent: Sleep: Logger: Clock](
   indexRef: Ref[F, IndexMap],
   client: PeerClient[F],
   distributionInterval: FiniteDuration
@@ -37,10 +37,12 @@ class LazyDistributedInvertedIndex[F[_]: Sync: Concurrent: Sleep: Logger](
   override def run: F[Fiber[F, Unit]] =
     Concurrent[F].start {
       for {
+        now    <- Clock[F].monotonic(MILLISECONDS)
+        inst    = Instant.ofEpochMilli(now.millis.plus(distributionInterval).toMillis)
+        nextRun = LocalDateTime.ofInstant(inst, ZoneId.systemDefault())
         _ <-
           Logger[F].info(
-            s"Scheduled next index distribution run to execute in ${distributionInterval.toSeconds} seconds " +
-              s"(next run: ${LocalDateTime.ofInstant(Instant.ofEpochMilli(System.currentTimeMillis().millis.minus(distributionInterval).toMillis), ZoneId.systemDefault())})."
+            s"Scheduled next index distribution run to execute in ${distributionInterval.toSeconds} seconds (next run: $nextRun)."
           )
         _     <- Sleep[F].sleep(distributionInterval)
         cache <- indexRef.getAndSet(Map.empty)
