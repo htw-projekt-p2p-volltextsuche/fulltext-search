@@ -46,7 +46,8 @@ class Searcher(val tokenizer: Tokenizer) {
   ): PartialResult =
     tokenizer(query)
       .map(term => ii.getOrElse(term, Nil).groupMap(_.docId)(p => (term, p)))
-      .reduce((a, b) => a && b)
+      .reduceOption((a, b) => a && b)
+      .getOrElse(Map.empty)
 
   private def connectResults(
     chunkResults: List[(Connector, PartialResult)]
