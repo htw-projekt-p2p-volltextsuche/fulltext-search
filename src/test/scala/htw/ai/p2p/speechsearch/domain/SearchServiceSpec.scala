@@ -1,6 +1,7 @@
 package htw.ai.p2p.speechsearch.domain
 
 import cats.effect.IO
+import cats.implicits.catsSyntaxFlatMapOps
 import htw.ai.p2p.speechsearch.BaseShouldSpec
 import htw.ai.p2p.speechsearch.SpeechSearchServer.unsafeLogger
 import htw.ai.p2p.speechsearch.TestData._
@@ -57,6 +58,17 @@ class SearchServiceSpec extends BaseShouldSpec {
         speech2.docId
       )
     }
+  }
+
+  it should "not fail on empty results" in {
+    val emptySearchService = for {
+      ii      <- TestInvertedIndex
+      searcher = Searcher(TestTokenizer)
+    } yield SearchService.impl[IO](searcher, ii)
+
+    val search = Search(Query("unknown", List(QueryElement(terms = ""))))
+
+    (emptySearchService >>= (_.create(search))) assertNoException
   }
 
   it should "sort out corresponding results of an AND_NOT query" in {
