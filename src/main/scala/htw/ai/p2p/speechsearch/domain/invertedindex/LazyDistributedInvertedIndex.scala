@@ -9,7 +9,8 @@ import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex._
 import io.chrisdavenport.log4cats.Logger
 import retry.Sleep
 
-import scala.concurrent.duration.FiniteDuration
+import java.time.{Instant, LocalDateTime, ZoneId}
+import scala.concurrent.duration.{DurationLong, FiniteDuration}
 
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
@@ -38,7 +39,8 @@ class LazyDistributedInvertedIndex[F[_]: Sync: Concurrent: Sleep: Logger](
       for {
         _ <-
           Logger[F].info(
-            s"Scheduled next index distribution run to execute in ${distributionInterval.toMinutes} minutes."
+            s"Scheduled next index distribution run to execute in ${distributionInterval.toSeconds} seconds " +
+              s"(next run: ${LocalDateTime.ofInstant(Instant.ofEpochMilli(System.currentTimeMillis().millis.minus(distributionInterval).toMillis), ZoneId.systemDefault())})."
           )
         _     <- Sleep[F].sleep(distributionInterval)
         cache <- indexRef.getAndSet(Map.empty)

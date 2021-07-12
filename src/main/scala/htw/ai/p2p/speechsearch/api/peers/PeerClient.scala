@@ -153,12 +153,12 @@ object PeerClient {
       details match {
         case WillDelayAndRetry(_, retriesSoFar, _) =>
           Logger[F].error(e)(
-            s"Failed to connect to P2P network after ${retriesSoFar + 1} " +
-              s"${"try".formalize(retriesSoFar + 1)}. Scheduled another retry."
+            s"Failure in P2P network. Tried ${retriesSoFar + 1} " +
+              s"${"time".formalize(retriesSoFar + 1)} yet. Scheduled another retry."
           )
         case GivingUp(totalRetries, _) =>
           Logger[F].error(e)(
-            s"Failed to connect to P2P network after $totalRetries tries. Giving up." +
+            s"Failed to insert entries into P2P network after $totalRetries tries. Giving up." +
               s"Please verify that 'index.dhtUri' is configured properly and the P2P service is accessible."
           )
       }
