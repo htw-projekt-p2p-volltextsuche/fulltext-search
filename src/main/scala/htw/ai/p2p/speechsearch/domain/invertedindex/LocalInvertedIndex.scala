@@ -25,11 +25,11 @@ class LocalInvertedIndex[F[_]: Sync](indexRef: Ref[F, IndexMap])
     postings = terms.map(term => term -> index.getOrElse(term, Nil)).toMap
   } yield postings
 
-  override def insert(term: Term, postings: PostingList): F[Boolean] =
-    indexRef tryUpdate (_ appendByKey (term -> postings))
+  override def insert(term: Term, postings: PostingList): F[Unit] =
+    indexRef update (_ appendByKey (term -> postings))
 
-  override def insertAll(entries: IndexMap): F[Boolean] =
-    indexRef tryUpdate {
+  override def insertAll(entries: IndexMap): F[Unit] =
+    indexRef update {
       entries.foldLeft(_) { case (ii, (term, postings)) =>
         ii appendByKey (term -> postings)
       }

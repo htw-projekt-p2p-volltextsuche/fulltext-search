@@ -10,6 +10,7 @@ val LogbackVersion           = "1.2.3"
 val Log4CatsVersion          = "1.1.1"
 val MeowMtlVersion           = "0.4.0"
 val PureConfigVersion        = "0.16.0"
+val ScalaInflectorVersion    = "1.4.0"
 val ScalaMockVersion         = "5.1.0"
 val ScalaTestVersion         = "3.2.7"
 val SvmSubsVersion           = "20.2.0"
@@ -61,7 +62,8 @@ val buildSettings = Defaults.coreDefaultSettings ++ Seq(
     "com.beachape"      %% "enumeratum-circe" % EnumeratumCirceVersion,
     "com.github.cb372"  %% "cats-retry"       % CatsRetryVersion,
     "io.chrisdavenport" %% "log4cats-slf4j"   % Log4CatsVersion,
-    "org.scalameta"     %% "svm-subs"         % SvmSubsVersion
+    "org.scalameta"     %% "svm-subs"         % SvmSubsVersion,
+    "com.qvantel"       %% "scala-inflector"  % ScalaInflectorVersion
   ),
   libraryDependencies += scalaVersion("org.scala-lang" % "scala-reflect" % _).value,
   libraryDependencies ++= Seq(

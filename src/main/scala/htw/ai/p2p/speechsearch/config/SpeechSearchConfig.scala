@@ -23,7 +23,7 @@ case class SpeechSearchConfig(
 
 object SpeechSearchConfig {
 
-  implicit val indexStorageConverter: ConfigReader[IndexStorage] =
+  implicit val indexStorageConverter: ConfigReader[IndexStoragePolicy] =
     deriveEnumerationReader
 
   implicit val allowedOriginsConverter: ConfigReader[String => Boolean] =
@@ -35,9 +35,10 @@ object SpeechSearchConfig {
 
 }
 
-sealed trait IndexStorage
-case object Local       extends IndexStorage
-case object Distributed extends IndexStorage
+sealed trait IndexStoragePolicy
+case object Local           extends IndexStoragePolicy
+case object Distributed     extends IndexStoragePolicy
+case object LazyDistributed extends IndexStoragePolicy
 
 case class Server(
   port: Int = 8421,
@@ -54,15 +55,18 @@ case class Server(
 )
 
 case class Index(
-  storage: IndexStorage = Local,
+  storage: IndexStoragePolicy = Local,
   stopWordsLocation: String = "stopwords_de.txt",
   sampleSpeechesLocation: String = "sample_speeches.json",
-  insertSampleSpeeches: Boolean = true
+  insertSampleSpeeches: Boolean = true,
+  distributionInterval: FiniteDuration = 5.minutes
 )
 
 case class Peers(
   uri: Uri = uri"http://localhost:8090/",
   logBody: Boolean = true,
+  retryThreshold: FiniteDuration = 1.second,
+  retryBackoff: FiniteDuration = 200.millis,
   requestTimeout: FiniteDuration = defaults.RequestTimeout,
   connectTimeout: FiniteDuration = defaults.ConnectTimeout,
   chunkBufferMaxSize: Int = 1024 * 1024,

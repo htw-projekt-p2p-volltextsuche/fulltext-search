@@ -11,18 +11,18 @@ import scala.concurrent.duration.DurationInt
  * @author Joscha Seelig <jduesentrieb> 2021
  */
 object RateLimiter {
-//
-//  def rateLimited[A, B, F[_]: Monad: Concurrent: ContextShift: Timer](
-//    s: Semaphore[F],
-//    f: A => F[B]
-//  ): A => F[B] = { a: A =>
-//    for {
-//      _      <- s.acquire
-//      timer  <- Timer[F].sleep(1.second) .start
-//      result <- f(a)
-//      _      <- timer.join
-//      _      <- s.release
-//    } yield result
-//  }
+
+  def rateLimited[A, B, F[_]: Monad: Concurrent: ContextShift: Timer](
+    s: Semaphore[F],
+    f: A => F[B]
+  ): A => F[B] = { a: A =>
+    for {
+      _      <- s.acquire
+      fiber  <- Concurrent[F].start(Timer[F].sleep(1.second))
+      result <- f(a)
+      _      <- fiber.join
+      _      <- s.release
+    } yield result
+  }
 
 }

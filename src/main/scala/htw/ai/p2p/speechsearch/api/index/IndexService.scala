@@ -2,8 +2,7 @@ package htw.ai.p2p.speechsearch.api.index
 
 import cats.effect._
 import cats.implicits._
-import htw.ai.p2p.speechsearch.api._
-import htw.ai.p2p.speechsearch.api.errors.IndexError
+import htw.ai.p2p.speechsearch.domain.ImplicitUtilities.FormalizedString
 import htw.ai.p2p.speechsearch.domain.Indexer
 import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex
 import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex.{IndexMap, Term}
@@ -30,16 +29,14 @@ object IndexService {
     ii: InvertedIndex[F]
   ): IndexService[F] =
     new IndexService[F] {
-      private val F = implicitly[Sync[F]]
 
       override def insert(speech: Speech): F[IndexSuccess] = {
         val indexEntries = indexer.index(speech)
         for {
           response <- indexAll(indexEntries, speech)
-          _ <-
-            Logger[F].info(
-              s"Successfully indexed single speech with doc_id '${speech.docId}'."
-            )
+          _ <- Logger[F].info(
+                 s"Successfully indexed single speech with doc_id '${speech.docId}'."
+               )
         } yield response
       }
 
@@ -49,7 +46,10 @@ object IndexService {
         }
         for {
           response <- indexAll(indexEntries, speeches: _*)
-          _        <- Logger[F].info(s"Successfully indexed ${speeches.size} speeches.")
+          _ <-
+            Logger[F].info(
+              s"Successfully indexed ${speeches.size} ${"speech".formalize(speeches.size)}."
+            )
         } yield response
       }
 
@@ -57,16 +57,11 @@ object IndexService {
         indexEntries: IndexMap,
         speeches: Speech*
       ): F[IndexSuccess] =
-        for {
-          success <- ii :++ indexEntries
-          response <- if (success) createSuccessMessage(speeches).pure[F]
-                      else F.raiseError(IndexError(speeches))
-        } yield response
+        (ii :++ indexEntries) *> IndexSuccess(
+          s"${speeches.size} ${"speech".formalize(speeches.size)} speeches have been successfully indexed: " +
+            s"${speeches.map(_.docId.self).mkString(", ")}"
+        ).pure[F]
 
-      private def createSuccessMessage(speeches: Seq[Speech]) =
-        IndexSuccess(
-          s"${speeches.size} speeches have been successfully indexed: ${speeches.map(_.docId.self).mkString(",")}"
-        )
     }
 
 }

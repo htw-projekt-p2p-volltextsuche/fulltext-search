@@ -10,8 +10,10 @@ import org.http4s.client.ConnectionFailure
  */
 sealed trait ApiError extends Exception
 
-case class SearchError(search: Search)                   extends ApiError
-case class IndexError(speeches: Seq[Speech])             extends ApiError
-case class PeerServerFailure(message: String)            extends ApiError
-case class PeerServerError(cause: Throwable)             extends ApiError
-case class PeerConnectionError(cause: ConnectionFailure) extends ApiError
+case class SearchError(search: Search)       extends ApiError
+case class IndexError(speeches: Seq[Speech]) extends ApiError
+
+sealed trait PeerError                                   extends ApiError
+case class PeerServerFailure(message: String)            extends PeerError
+case class PeerServerError(cause: Throwable)             extends PeerError
+case class PeerConnectionError(cause: ConnectionFailure) extends PeerError

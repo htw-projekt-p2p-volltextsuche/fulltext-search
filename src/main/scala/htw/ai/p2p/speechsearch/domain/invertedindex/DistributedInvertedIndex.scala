@@ -12,29 +12,27 @@ import io.chrisdavenport.log4cats.Logger
 class DistributedInvertedIndex[F[_]: Sync: Logger](client: PeerClient[F])
     extends InvertedIndex[F] {
 
-  private val IndexSizeKey = "_keyset_size"
-
   override def size: F[Int] =
     for {
       json <- client.getRaw(IndexSizeKey)
       size <- json.as[Int].liftTo[F]
     } yield size
 
-  override def insert(term: Term, postings: PostingList): F[Boolean] =
+  override def insert(term: Term, postings: PostingList): F[Unit] =
     for {
-      success <- client.insert(term, postings)
-      _       <- Logger[F].info(s"Insertion of posting for term $term succeeded: $success")
-    } yield success
+      _ <- client.insert(term, postings)
+      _ <- Logger[F].info(s"Insertion of posting for term $term succeeded.")
+    } yield ()
 
-  override def insertAll(entries: IndexMap): F[Boolean] =
+  override def insertAll(entries: IndexMap): F[Unit] =
     for {
       _ <-
         Logger[F].info(
           s"Attempting to insert ${entries.size} posting lists into the P2P network."
         )
-      success <- client.insert(entries)
-      _       <- Logger[F].info(s"Insertion of posting lists succeeded: $success")
-    } yield success
+      _ <- client.insert(entries)
+      _ <- Logger[F].info(s"Insertion of posting lists succeeded.")
+    } yield ()
 
   override def get(term: Term): F[(Term, PostingList)] =
     client.getPosting(term)

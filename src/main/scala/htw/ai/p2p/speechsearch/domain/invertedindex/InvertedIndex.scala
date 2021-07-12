@@ -1,11 +1,14 @@
 package htw.ai.p2p.speechsearch.domain.invertedindex
 
-import cats.effect.Sync
+import cats.effect.{Concurrent, Sync}
 import cats.effect.concurrent.Ref
 import htw.ai.p2p.speechsearch.api.peers.PeerClient
 import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex._
 import htw.ai.p2p.speechsearch.domain.model.speech.Posting
 import io.chrisdavenport.log4cats.Logger
+import retry.Sleep
+
+import scala.concurrent.duration.FiniteDuration
 
 /**
  * Interface for the encapsulation of an inverted index.
@@ -38,13 +41,13 @@ trait InvertedIndex[F[_]] {
   /**
    * Alias for `insert`.
    */
-  def :+(entry: (Term, PostingList)): F[Boolean] =
+  def :+(entry: (Term, PostingList)): F[Unit] =
     insert(entry._1, entry._2)
 
   /**
    * Alias for `insertAll`
    */
-  def :++(entries: IndexMap): F[Boolean] =
+  def :++(entries: IndexMap): F[Unit] =
     insertAll(entries)
 
   /**
@@ -93,7 +96,7 @@ trait InvertedIndex[F[_]] {
    * @return A new inverted index updated with the given
    *         term-posting-pair.
    */
-  def insert(term: Term, postings: PostingList): F[Boolean]
+  def insert(term: Term, postings: PostingList): F[Unit]
 
   /**
    * Adds all specified postings to the associated term
@@ -110,7 +113,7 @@ trait InvertedIndex[F[_]] {
    *                to a term to which they are associated.
    * @return A Boolean wrapped in
    */
-  def insertAll(entries: IndexMap): F[Boolean]
+  def insertAll(entries: IndexMap): F[Unit]
 
 }
 
@@ -131,6 +134,11 @@ object InvertedIndex {
    */
   type Term = String
 
+  /**
+   * Special key that is used to access the index size.
+   */
+  val IndexSizeKey = "_keyset_size"
+
   def apply[F[_]](implicit ev: InvertedIndex[F]): InvertedIndex[F] = ev
 
   def distributed[F[_]: Sync: Logger](peerClient: PeerClient[F]): InvertedIndex[F] =
@@ -138,5 +146,11 @@ object InvertedIndex {
 
   def local[F[_]: Sync](indexRef: Ref[F, IndexMap]): InvertedIndex[F] =
     new LocalInvertedIndex(indexRef)
+
+  def lazyDistributed[F[_]: Sync: Concurrent: Sleep: Logger](
+    indexRef: Ref[F, IndexMap],
+    peerClient: PeerClient[F],
+    distributionInterval: FiniteDuration
+  ) = new LazyDistributedInvertedIndex[F](indexRef, peerClient, distributionInterval)
 
 }

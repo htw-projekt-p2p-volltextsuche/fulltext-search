@@ -1,20 +1,27 @@
 package htw.ai.p2p.speechsearch.api.peers
 
-import cats.effect.{Async, ContextShift}
+import cats.effect.{Async, ContextShift, Timer}
 import cats.implicits._
 import cats.{MonadError, Parallel}
 import htw.ai.p2p.speechsearch.api.errors._
-import htw.ai.p2p.speechsearch.config.CirceConfig._
+import htw.ai.p2p.speechsearch.domain.ImplicitUtilities.FormalizedString
 import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex._
+import io.chrisdavenport.log4cats.Logger
 import io.circe.Json
+import io.circe.generic.extras.Configuration
 import io.circe.generic.extras.auto._
 import org.http4s.Method._
-import org.http4s.Status.NotFound
+import org.http4s.Status.BadRequest
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.circe.CirceSensitiveDataEntityDecoder.circeEntityDecoder
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.client.{Client, ConnectionFailure, UnexpectedStatus}
 import org.http4s.{Request, Uri}
+import retry.RetryDetails.{GivingUp, WillDelayAndRetry}
+import retry.RetryPolicies.{fibonacciBackoff, limitRetriesByCumulativeDelay}
+import retry.{RetryDetails, Sleep}
+
+import scala.concurrent.duration.FiniteDuration
 
 trait PeerClient[F[_]] {
 
@@ -26,7 +33,16 @@ trait PeerClient[F[_]] {
 
   def insert(term: Term, postings: PostingList): F[Boolean]
 
-  def insert(entries: IndexMap): F[Boolean]
+  /**
+   * Inserts all the specified entries into the p2p network
+   * and returns eventually failed term-postings pairs.
+   * Consequently an empty returned list indicates success
+   * for all specified entries.
+   *
+   * @param entries Entries that are to be inserted.
+   * @return All eventually failed term-postings pairs.
+   */
+  def insert(entries: IndexMap): F[IndexMap]
 
 }
 
@@ -34,10 +50,14 @@ object PeerClient {
 
   def apply[F[_]](implicit ev: PeerClient[F]): PeerClient[F] = ev
 
-  def impl[F[_]: Async: ContextShift: Parallel: Client](
-    uri: Uri
+  def impl[F[_]: Async: Parallel: Timer: ContextShift: Client: Logger](
+    uri: Uri,
+    retryThreshold: FiniteDuration,
+    retryBackoff: FiniteDuration
   )(implicit M: MonadError[F, Throwable]): PeerClient[F] =
     new PeerClient[F] with Http4sClientDsl[F] {
+
+      implicit val config: Configuration = Configuration.default.withDefaults
 
       private val client = implicitly[Client[F]]
 
@@ -46,14 +66,16 @@ object PeerClient {
         client
           .expect[SuccessData](req)
           .map(_.value)
+          .retryOnAllErrors(retryThreshold, retryBackoff)
           .adaptDomainError
       }
 
       override def getPosting(term: String): F[(Term, PostingList)] =
         client
           .expectOption[PostingsData](Request(GET, uri / term))
-          .recover { case UnexpectedStatus(NotFound) => None }
+          .recover { case UnexpectedStatus(BadRequest) => None }
           .map(term -> _.fold[PostingList](Nil)(_.value))
+          .retryOnAllErrors(retryThreshold, retryBackoff)
           .adaptDomainError
 
       override def getPostings(terms: List[String]): F[IndexMap] =
@@ -67,22 +89,79 @@ object PeerClient {
             _.as[ErrorData].map(e => PeerServerFailure(e.errorMsg))
           }
           .map(!_.error)
+          .retryOnAllErrors(retryThreshold, retryBackoff)
           .adaptDomainError
       }
 
-      override def insert(entries: IndexMap): F[Boolean] =
-        entries.toSeq.traverse { case (term, postings) =>
+      override def insert(entries: IndexMap): F[IndexMap] =
+        entries.toList traverseOrCancel { case (term, postings) =>
           insert(term, postings)
-        } map (_ forall identity)
-
+            .map(_ => Success: ExecutionStatus)
+            .recover {
+              case _: PeerConnectionError => FatalFail
+              case _                      => Fail
+            }
+        } map (_.toMap)
     }
 
-  implicit class AdaptedClient[F[_]: Async, A](self: F[A]) {
+  sealed trait ExecutionStatus
+  case object Success   extends ExecutionStatus
+  case object Fail      extends ExecutionStatus
+  case object FatalFail extends ExecutionStatus
 
+  implicit class CancelableTraverseList[A](self: List[A]) {
+
+    def traverseOrCancel[F[_]: Async](f: A => F[ExecutionStatus]): F[List[A]] = {
+      def go(rem: List[A], acc: F[List[A]] = List.empty.pure[F]): F[List[A]] =
+        rem match {
+          case Nil => acc
+          case x :: xs =>
+            f(x) >>= {
+              case Success   => go(xs, acc)
+              case Fail      => go(xs, acc.map(x :: _))
+              case FatalFail => acc.map(_ ::: x :: xs)
+            }
+        }
+      go(self)
+    }
+
+  }
+
+  implicit class ErrorHandlingFunctor[F[_]: Async: Sleep: Logger, A](self: F[A]) {
+
+    import retry.syntax.all._
     def adaptDomainError: F[A] = self.adaptError {
       case e: ConnectionFailure => PeerConnectionError(e)
       case e                    => PeerServerError(e)
     }
+
+    def retryOnAllErrors(
+      threshold: FiniteDuration,
+      backoff: FiniteDuration
+    ): F[A] = self.retryingOnAllErrors(
+      policy = limitRetriesByCumulativeDelay(
+        threshold = threshold,
+        policy = fibonacciBackoff(backoff)
+      ),
+      onError = handlePeerConnectionErrors
+    )
+
+    private def handlePeerConnectionErrors(
+      e: Throwable,
+      details: RetryDetails
+    ): F[Unit] =
+      details match {
+        case WillDelayAndRetry(_, retriesSoFar, _) =>
+          Logger[F].error(e)(
+            s"Failed to connect to P2P network after ${retriesSoFar + 1} " +
+              s"${"try".formalize(retriesSoFar + 1)}. Scheduled another retry."
+          )
+        case GivingUp(totalRetries, _) =>
+          Logger[F].error(e)(
+            s"Failed to connect to P2P network after $totalRetries tries. Giving up." +
+              s"Please verify that 'index.dhtUri' is configured properly and the P2P service is accessible."
+          )
+      }
 
   }
 

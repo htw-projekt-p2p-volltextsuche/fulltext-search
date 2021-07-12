@@ -13,6 +13,8 @@ import org.http4s.implicits.http4sLiteralsSyntax
 import org.scalamock.scalatest.AsyncMockFactory
 import org.scalatest.OneInstancePerTest
 
+import scala.concurrent.duration.DurationInt
+
 class DistributedInvertedIndexSpec
     extends BaseShouldSpec
     with OneInstancePerTest
@@ -20,8 +22,9 @@ class DistributedInvertedIndexSpec
 
   implicit val mockClient: Client[IO] = mock[Client[IO]]
 
-  private val peerClient: PeerClient[IO] = PeerClient.impl[IO](uri"/api")
-  val dii: InvertedIndex[IO]             = InvertedIndex.distributed[IO](peerClient)
+  private val peerClient: PeerClient[IO] =
+    PeerClient.impl[IO](uri"/api", 1.second, 100.millis)
+  val dii: InvertedIndex[IO] = InvertedIndex.distributed[IO](peerClient)
 
   behavior of "A distributed inverted index"
 

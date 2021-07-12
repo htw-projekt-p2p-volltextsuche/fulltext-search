@@ -1,21 +1,17 @@
 package htw.ai.p2p.speechsearch
 
-import cats.{Applicative, Parallel}
+import cats.Parallel
 import cats.effect._
 import cats.effect.concurrent.Ref
 import cats.implicits._
 import com.olegpy.meow.hierarchy._
 import htw.ai.p2p.speechsearch.IndexSeeder.insertSpeeches
-import htw.ai.p2p.speechsearch.api.errors.{
-  ApiError,
-  ApiErrorHandler,
-  HttpErrorHandler
-}
+import htw.ai.p2p.speechsearch.api.errors._
 import htw.ai.p2p.speechsearch.api.index.{IndexRoutes, IndexService}
 import htw.ai.p2p.speechsearch.api.peers.PeerClient
 import htw.ai.p2p.speechsearch.api.searches.{SearchRoutes, SearchService}
 import htw.ai.p2p.speechsearch.config.SpeechSearchConfig._
-import htw.ai.p2p.speechsearch.config.{Distributed, Local, SpeechSearchConfig}
+import htw.ai.p2p.speechsearch.config._
 import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex
 import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex.{PostingList, Term}
 import htw.ai.p2p.speechsearch.domain.{Indexer, Searcher, Tokenizer}
@@ -31,13 +27,8 @@ import org.http4s.server.{Router, Server}
 import pureconfig.ConfigSource
 import pureconfig.generic.auto._
 import pureconfig.module.http4s._
-import retry.RetryDetails
-import retry.RetryDetails.{GivingUp, WillDelayAndRetry}
-import retry.RetryPolicies._
-import retry.syntax.all._
 
 import scala.concurrent.ExecutionContext.global
-import scala.concurrent.duration.DurationInt
 import scala.io.Source.fromResource
 
 /**
@@ -71,9 +62,10 @@ object SpeechSearchServer extends IOApp {
 
       httpApp = Router("/api" -> services).orNotFound
       corsApp = CORS(httpApp, config.server.corsPolicy)
-      loggingHttpApp =
-        ServerLogger
-          .httpApp(logHeaders = true, logBody = config.server.logBody)(corsApp)
+      loggingHttpApp = ServerLogger.httpApp(
+                         logHeaders = true,
+                         logBody = config.server.logBody
+                       )(corsApp)
 
       server <- BlazeServerBuilder(global)
                   .bindHttp(config.server.port, config.server.host)
@@ -99,10 +91,10 @@ object SpeechSearchServer extends IOApp {
     F[_]: ContextShift: ConcurrentEffect: Parallel: Timer
   ](config: SpeechSearchConfig): Resource[F, InvertedIndex[F]] =
     config.index.storage match {
-      case Local       => initLocalInvertedIndex
-      case Distributed => initDistributedInvertedIndex(config)
+      case Local           => initLocalInvertedIndex
+      case Distributed     => initDistributedInvertedIndex(config)
+      case LazyDistributed => initLazyDistributedInvertedIndex(config)
     }
-
   def initLocalInvertedIndex[F[_]: ConcurrentEffect]: Resource[F, InvertedIndex[F]] =
     for {
       indexRef <- Resource.eval(Ref[F].of(Map.empty[Term, PostingList]))
@@ -112,15 +104,33 @@ object SpeechSearchServer extends IOApp {
     F[_]: ContextShift: ConcurrentEffect: Parallel: Timer
   ](config: SpeechSearchConfig): Resource[F, InvertedIndex[F]] =
     for {
-      client <- makeClient(config)
-      implicit0(c: Client[F]) <- Resource.pure[F, Client[F]] {
-                                   ClientLogger(
-                                     logHeaders = true,
-                                     logBody = config.peers.logBody
-                                   )(client)
-                                 }
-      peerClient = PeerClient.impl(config.peers.uri)
+      peerClient <- initPeerClient(config)
     } yield InvertedIndex.distributed(peerClient)
+
+  def initLazyDistributedInvertedIndex[
+    F[_]: ContextShift: ConcurrentEffect: Parallel: Timer
+  ](config: SpeechSearchConfig): Resource[F, InvertedIndex[F]] =
+    for {
+      indexRef   <- Resource.eval(Ref[F].of(Map.empty[Term, PostingList]))
+      peerClient <- initPeerClient(config)
+      ii = InvertedIndex.lazyDistributed(
+             indexRef,
+             peerClient,
+             config.index.distributionInterval
+           )
+      _ <- Resource.eval(ii.run)
+    } yield ii
+
+  private def initPeerClient[
+    F[_]: ConcurrentEffect: ContextShift: Timer: Parallel
+  ](config: SpeechSearchConfig) =
+    for {
+      implicit0(c: Client[F]) <- makeClient(config)
+    } yield PeerClient.impl(
+      config.peers.uri,
+      config.peers.retryThreshold,
+      config.peers.retryBackoff
+    )
 
   private def makeClient[F[_]: ConcurrentEffect: Timer](
     config: SpeechSearchConfig
@@ -132,33 +142,7 @@ object SpeechSearchServer extends IOApp {
       .withBufferSize(config.peers.bufferSize)
       .withMaxWaitQueueLimit(config.peers.maxWaitQueueLimit)
       .resource
-      .retryingOnAllErrors(
-        policy = limitRetriesByCumulativeDelay(
-          threshold = 5.seconds,
-          policy = fibonacciBackoff(100.millis)
-        ),
-        onError = handleDhtConnectionErrors[F]
-      )
-
-  private def handleDhtConnectionErrors[F[_]: Applicative: Logger](
-    e: Throwable,
-    details: RetryDetails
-  ): Resource[F, Unit] =
-    details match {
-      case WillDelayAndRetry(_, retriesSoFar, _) =>
-        Resource.eval(
-          Logger[F].error(e)(
-            s"Failed to connect to P2P network after $retriesSoFar tries. Scheduled another retry."
-          )
-        )
-      case GivingUp(totalRetries, _) =>
-        Resource.eval(
-          Logger[F].error(e)(
-            s"Failed to connect to P2P network after $totalRetries. Giving up." +
-              s"Please verify that 'index.dhtUri' is configured properly and the dht service is accessible."
-          )
-        )
-    }
+      .map(ClientLogger(logHeaders = true, logBody = config.peers.logBody)(_))
 
   override def run(args: List[String]): IO[ExitCode] =
     serve.use(_ => IO.never).as(ExitCode.Success)

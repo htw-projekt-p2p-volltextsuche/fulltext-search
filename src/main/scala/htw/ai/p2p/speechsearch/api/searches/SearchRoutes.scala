@@ -8,6 +8,7 @@ import htw.ai.p2p.speechsearch.domain.model.search.Search
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.dsl.Http4sDsl
+import org.http4s.headers.Allow
 
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
@@ -22,6 +23,7 @@ class SearchRoutes[F[_]: Sync](searchService: SearchService[F])
         result <- searchService.create(search)
         resp   <- Ok(result)
       } yield resp
+    case _ @_ -> Root / "searches" => MethodNotAllowed(Allow(POST))
   }
 }
 

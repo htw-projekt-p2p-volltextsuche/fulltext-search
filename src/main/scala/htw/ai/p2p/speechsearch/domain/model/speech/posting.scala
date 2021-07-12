@@ -5,7 +5,6 @@ import io.circe.Codec
 import io.circe.generic.extras.semiauto._
 
 import java.util.UUID
-import scala.util.Try
 
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
@@ -19,9 +18,6 @@ object DocId {
   implicit val docIdCodec: Codec[DocId] = deriveUnwrappedCodec
 
   def apply(value: UUID): DocId = new DocId(value)
-
-  def apply(value: String): Option[DocId] =
-    Try(DocId(UUID fromString value)).toOption
 
 }
 
