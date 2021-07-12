@@ -58,7 +58,7 @@ object IndexService {
         speeches: Speech*
       ): F[IndexSuccess] =
         (ii :++ indexEntries) *> IndexSuccess(
-          s"${speeches.size} ${"speech".formalize(speeches.size)} speeches have been successfully indexed: " +
+          s"${speeches.size} ${"speech".formalize(speeches.size)} have been successfully indexed: " +
             s"${speeches.map(_.docId.self).mkString(", ")}"
         ).pure[F]
 
