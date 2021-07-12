@@ -24,6 +24,7 @@ val buildSettings = Defaults.coreDefaultSettings ++ Seq(
   javaOptions += "-Dconfig.override_with_env_vars=true",
   scalacOptions ++= Seq(
     "-target:11",
+//    "-encoding", "utf8",
     "-feature",
     "-deprecation",
     "-unchecked",
