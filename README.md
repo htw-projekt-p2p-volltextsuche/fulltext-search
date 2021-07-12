@@ -22,7 +22,7 @@ Environment variables need to be prefixed by `CONFIG_FORCE_` except there is an 
 **They will be evaluated in following order** (starting from the highest priority):
 
 1. Environment variable:               `export CONFIG_FORCE_SERVER_HOST="0.0.0.0"`
-   - **This actually doesn't work!** - use env-alias if defined 
+    - **This actually doesn't work!** - use env-alias if defined
 2. Java system property as argument:   `sbt '; set javaOptions += "-Dserver.host="0.0.0.0""; run'`
 3. *application.conf*:                 `server { host = 0.0.0.0 }`
 
@@ -37,8 +37,23 @@ Environment variables need to be prefixed by `CONFIG_FORCE_` except there is an 
 |index.stop-words-location|File name of the stopwords resource|-|stopwords_de.txt|
 |index.sample-speeches-location|File name of the sample speeches resource|-|sample_speeches.json|
 |index.insert-sample-speeches|Inserts sample speeches on startup when set|-|false|
+|index.distribution-interval|Sets the interval for scanning and distributing the cached index|-|false|
 |peers.uri|Entrypoint to the P2P network|-|http://localhost:8090/|
 |peers.log-body|Enables client logging of response bodies|PEERS_LOG_BODY|true|
+
+### Index Storage Policies
+
+The application can be started with three different storage policies. They work as follows:
+
+* `local`
+  ** Indexing and retrieval is both done locally in memory on the host machine.
+* `distributed`
+  ** Indexing and retrieval is handled by calling the P2P network directly.
+  ** ⚠️ When indexing the request blocks while indexing. This can possibly take a long while. Therefore, an appropriate
+  timeout should be set on the calling machine.
+* `lazy-distributed`
+  ** Indexing is done by first storing the index in a local cache and then distributing it on a background thread.
+  ** The interval for scanning the cached indexed can be configured with the option `index.distribution-interval`
 
 ### Run tests
 
