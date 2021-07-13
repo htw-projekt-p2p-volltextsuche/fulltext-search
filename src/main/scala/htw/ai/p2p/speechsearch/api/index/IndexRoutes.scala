@@ -34,7 +34,7 @@ class IndexRoutes[F[_]: Sync] private (indexService: IndexService[F])
         resp     <- Ok(result)
       } yield resp
 
-    case _ @_ -> Root / Index / "speech" => MethodNotAllowed(Allow(POST))
+    case _ @_ -> Root / Index / "speech"   => MethodNotAllowed(Allow(POST))
     case _ @_ -> Root / Index / "speeches" => MethodNotAllowed(Allow(POST))
   }
 

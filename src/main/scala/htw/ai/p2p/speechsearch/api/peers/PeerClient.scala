@@ -11,7 +11,7 @@ import io.circe.Json
 import io.circe.generic.extras.Configuration
 import io.circe.generic.extras.auto._
 import org.http4s.Method._
-import org.http4s.Status.BadRequest
+import org.http4s.Status.{BadRequest, NotFound, ServiceUnavailable}
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.circe.CirceSensitiveDataEntityDecoder.circeEntityDecoder
 import org.http4s.client.dsl.Http4sClientDsl
@@ -74,7 +74,7 @@ object PeerClient {
       override def getPosting(term: String): F[(Term, PostingList)] =
         client
           .expectOption[PostingsData](Request(GET, uri / term))
-          .recover { case UnexpectedStatus(BadRequest) => None }
+          .recover { case UnexpectedStatus(NotFound) => None }
           .map(term -> _.fold[PostingList](Nil)(_.value))
           .retryOnAllErrors(retryThreshold, retryBackoff)
           .adaptDomainError
@@ -87,7 +87,9 @@ object PeerClient {
           .withEntity(InsertionData(postings))
         client
           .expectOr[SuccessData](req) {
-            _.as[ErrorData].map(e => PeerServerFailure(e.errorMsg))
+            case ServiceUnavailable(e) =>
+              (PeerServiceUnavailable(e.body.toString()): Throwable).pure[F]
+            case resp => resp.as[ErrorData].map(e => PeerServerFailure(e.errorMsg))
           }
           .map(!_.error)
           .retryOnAllErrors(retryThreshold, retryBackoff)
@@ -99,8 +101,9 @@ object PeerClient {
           insert(term, postings)
             .map(_ => Success: ExecutionStatus)
             .recover {
-              case _: PeerConnectionError => FatalFail
-              case _                      => Fail
+              case _: PeerConnectionError    => FatalFail
+              case _: PeerServiceUnavailable => FatalFail
+              case _                         => Fail
             }
         } map (_.toMap)
     }

@@ -31,9 +31,13 @@ class ApiErrorHandler[F[_]](implicit M: MonadError[F, ApiError], L: Logger[F])
       L.error(e)(
         s"Processing in P2P network failed."
       ) *> InternalServerError(e.getLocalizedMessage)
+    case PeerServiceUnavailable(message) =>
+      L.error(
+        s"Failed to connect to the P2P network: $message"
+      ) *> BadGateway("P2P service unavailable.")
     case PeerConnectionError(e) =>
       L.error(e)(
-        s"Failed to connect to the P2P network via entry point ${e.upstream}"
+        s"Failed to connect to the P2P network: ${e.getMessage}"
       ) *> BadGateway("Failed to connect to the P2P network.")
   }
 
