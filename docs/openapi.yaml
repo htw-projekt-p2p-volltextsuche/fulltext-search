@@ -142,14 +142,14 @@ components:
       description: This entity represents all relevant information related to a single speech
       type: object
       example:
-        id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+        doc_id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
         title: Super interesting speech
         speaker: Olaf Scholz
         affiliation: FDP
         date: '2019-08-24'
         text: blah blah blah...
       properties:
-        id:
+        doc_id:
           type: string
           minLength: 1
           description: doc_id as uuid
@@ -173,7 +173,7 @@ components:
           type: string
           minLength: 1
       required:
-        - id
+        - doc_id
         - title
         - speaker
         - affiliation
@@ -185,13 +185,13 @@ components:
       items:
         $ref: '#/components/schemas/Speech'
       example:
-        - id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
+        - doc_id: 497f6eca-6276-4993-bfeb-53cbbbba6f08
           title: Super interesting speech
           speaker: Olaf Scholz
           affiliation: FDP
           date: '2019-08-24'
           text: blah blah blah...
-        - id: 497f6eca-6276-9999-bfeb-53cbbbba0000
+        - doc_id: 497f6eca-6276-9999-bfeb-53cbbbba0000
           title: Another interesting speech
           speaker: Angela Merkel
           affiliation: CDU

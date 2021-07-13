@@ -88,13 +88,20 @@ object SpeechSearchServer extends IOApp {
       }
 
   private def initInvertedIndex[
-    F[_]: ContextShift: ConcurrentEffect: Parallel: Timer
+    F[_]: ContextShift: ConcurrentEffect: Parallel: Timer: Logger
   ](config: SpeechSearchConfig): Resource[F, InvertedIndex[F]] =
-    config.index.storage match {
-      case Local           => initLocalInvertedIndex
-      case Distributed     => initDistributedInvertedIndex(config)
-      case LazyDistributed => initLazyDistributedInvertedIndex(config)
+    Resource.eval(
+      Logger[F].info(
+        s"Initialize inverted index with storage policy: ${config.index.storage}"
+      )
+    ) *> {
+      config.index.storage match {
+        case Local           => initLocalInvertedIndex
+        case Distributed     => initDistributedInvertedIndex(config)
+        case LazyDistributed => initLazyDistributedInvertedIndex(config)
+      }
     }
+
   def initLocalInvertedIndex[F[_]: ConcurrentEffect]: Resource[F, InvertedIndex[F]] =
     for {
       indexRef <- Resource.eval(Ref[F].of(Map.empty[Term, PostingList]))
