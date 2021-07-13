@@ -25,7 +25,7 @@ import scala.concurrent.duration.FiniteDuration
 
 trait PeerClient[F[_]] {
 
-  def getRaw(term: Term): F[Json]
+  def getIndexSize: F[Int]
 
   def getPosting(term: Term): F[(Term, PostingList)]
 
@@ -60,12 +60,13 @@ object PeerClient {
       implicit val config: Configuration = Configuration.default.withDefaults
 
       private val client = implicitly[Client[F]]
+      private val M      = implicitly[MonadError[F, Throwable]]
 
-      override def getRaw(term: String): F[Json] = {
-        val req = Request[F](GET, uri / term)
+      override def getIndexSize: F[Int] = {
+        val req = Request[F](GET, uri / IndexSizeKey)
         client
           .expect[SuccessData](req)
-          .map(_.value)
+          .flatMap(_.value.as[Int].liftTo[F])
           .retryOnAllErrors(retryThreshold, retryBackoff)
           .adaptDomainError
       }
@@ -158,7 +159,7 @@ object PeerClient {
           )
         case GivingUp(totalRetries, _) =>
           Logger[F].error(e)(
-            s"Failed to insert entries into P2P network after $totalRetries tries. Giving up." +
+            s"Failure in P2P network. Giving up after $totalRetries tries." +
               s"Please verify that 'index.dhtUri' is configured properly and the P2P service is accessible."
           )
       }

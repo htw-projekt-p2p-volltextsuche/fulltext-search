@@ -22,11 +22,7 @@ class LazyDistributedInvertedIndex[F[_]: Sync: Concurrent: Sleep: Logger: Timer]
 ) extends LocalInvertedIndex[F](indexRef)
     with IndexDistributor[F] {
 
-  override def size: F[Int] =
-    for {
-      json <- client.getRaw(IndexSizeKey)
-      size <- json.as[Int].liftTo[F]
-    } yield size
+  override def size: F[Int] = client.getIndexSize
 
   override def get(term: Term): F[(Term, PostingList)] =
     client.getPosting(term)
@@ -57,7 +53,7 @@ class LazyDistributedInvertedIndex[F[_]: Sync: Concurrent: Sleep: Logger: Timer]
   private def distributeIndex(cachedIndex: IndexMap): F[Unit] =
     for {
       _ <- Logger[F].info(
-             s"Start to distribute ${cachedIndex.size} entries to P2P network."
+             s"Start to publish ${cachedIndex.size} entries to P2P network."
            )
       failed <- client.insert(cachedIndex)
       _ <- Logger[F].info(

@@ -12,11 +12,7 @@ import io.chrisdavenport.log4cats.Logger
 class DistributedInvertedIndex[F[_]: Sync: Logger](client: PeerClient[F])
     extends InvertedIndex[F] {
 
-  override def size: F[Int] =
-    for {
-      json <- client.getRaw(IndexSizeKey)
-      size <- json.as[Int].liftTo[F]
-    } yield size
+  override def size: F[Int] = client.getIndexSize
 
   override def insert(term: Term, postings: PostingList): F[Unit] =
     for {

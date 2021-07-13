@@ -39,7 +39,7 @@ object Tokenizer {
 
   def apply(stopWords: Set[String]) = new Tokenizer(stopWords)
 
-  private val DelimiterPattern     = """(\W+-\W*|\W*-\W+|[\s,.?!:;\\^%`„‟'")(])+""" r
+  private val DelimiterPattern     = """(\W+-\W*|\W*-\W+|[\s,.?!:;\\^`„‟'")(])+""" r
   private val NormalizationPattern = """[^\wäöüÄÖÜß]+""".r
 
   private val affiliationNorms: Map[String, String] =
