@@ -1,7 +1,7 @@
 package htw.ai.p2p.speechsearch.domain.invertedindex
 
 import cats.effect.concurrent.Ref
-import cats.effect.{Clock, Concurrent, Fiber, Sync}
+import cats.effect.{Clock, Concurrent, Fiber, Sync, Timer}
 import cats.implicits._
 import htw.ai.p2p.speechsearch.api.peers.PeerClient
 import htw.ai.p2p.speechsearch.domain.ImplicitUtilities.FormalizedString
@@ -15,7 +15,7 @@ import scala.concurrent.duration.{DurationLong, FiniteDuration, MILLISECONDS}
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
  */
-class LazyDistributedInvertedIndex[F[_]: Sync: Concurrent: Sleep: Logger: Clock](
+class LazyDistributedInvertedIndex[F[_]: Sync: Concurrent: Sleep: Logger: Timer](
   indexRef: Ref[F, IndexMap],
   client: PeerClient[F],
   distributionInterval: FiniteDuration
