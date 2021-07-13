@@ -26,7 +26,6 @@ class IndexRoutes[F[_]: Sync] private (indexService: IndexService[F])
         result <- indexService.insert(speech)
         resp   <- Ok(result)
       } yield resp
-    case _ @_ -> Root / Index / "speech" => MethodNotAllowed(Allow(POST))
 
     case req @ POST -> Root / Index / "speeches" =>
       for {
@@ -34,6 +33,8 @@ class IndexRoutes[F[_]: Sync] private (indexService: IndexService[F])
         result   <- indexService.insert(speeches)
         resp     <- Ok(result)
       } yield resp
+
+    case _ @_ -> Root / Index / "speech" => MethodNotAllowed(Allow(POST))
     case _ @_ -> Root / Index / "speeches" => MethodNotAllowed(Allow(POST))
   }
 
