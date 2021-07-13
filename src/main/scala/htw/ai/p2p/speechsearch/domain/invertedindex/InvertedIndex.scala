@@ -1,5 +1,6 @@
 package htw.ai.p2p.speechsearch.domain.invertedindex
 
+import cats.Parallel
 import cats.effect.{Concurrent, Sync, Timer}
 import cats.effect.concurrent.Ref
 import htw.ai.p2p.speechsearch.api.peers.PeerClient
@@ -147,10 +148,11 @@ object InvertedIndex {
   def local[F[_]: Sync](indexRef: Ref[F, IndexMap]): InvertedIndex[F] =
     new LocalInvertedIndex(indexRef)
 
-  def lazyDistributed[F[_]: Sync: Concurrent: Sleep: Logger: Timer](
+  def lazyDistributed[F[_]: Sync: Concurrent: Parallel: Sleep: Logger: Timer](
     indexRef: Ref[F, IndexMap],
     peerClient: PeerClient[F],
-    distributionInterval: FiniteDuration
-  ) = new LazyDistributedInvertedIndex[F](indexRef, peerClient, distributionInterval)
+    distributionInterval: FiniteDuration,
+    distributionChunkSize: Int
+  ) = new LazyDistributedInvertedIndex[F](indexRef, peerClient, distributionInterval, distributionChunkSize)
 
 }

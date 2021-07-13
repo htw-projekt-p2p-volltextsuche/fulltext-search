@@ -1,5 +1,6 @@
 package htw.ai.p2p.speechsearch.domain.invertedindex
 
+import cats.Parallel
 import cats.effect.concurrent.Ref
 import cats.effect.{Clock, Concurrent, Fiber, Sync, Timer}
 import cats.implicits._
@@ -15,10 +16,13 @@ import scala.concurrent.duration.{DurationLong, FiniteDuration, MILLISECONDS}
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
  */
-class LazyDistributedInvertedIndex[F[_]: Sync: Concurrent: Sleep: Logger: Timer](
+class LazyDistributedInvertedIndex[
+  F[_]: Sync: Concurrent: Parallel: Sleep: Logger: Timer
+](
   indexRef: Ref[F, IndexMap],
   client: PeerClient[F],
-  distributionInterval: FiniteDuration
+  distributionInterval: FiniteDuration,
+  distributionChunkSize: Int
 ) extends LocalInvertedIndex[F](indexRef)
     with IndexDistributor[F] {
 
@@ -51,6 +55,9 @@ class LazyDistributedInvertedIndex[F[_]: Sync: Concurrent: Sleep: Logger: Timer]
     }
 
   private def distributeIndex(cachedIndex: IndexMap): F[Unit] =
+    cachedIndex.grouped(distributionChunkSize).toSeq.parTraverse(publish) *> ().pure[F]
+
+  private def publish(cachedIndex: IndexMap): F[Unit] =
     for {
       _ <- Logger[F].info(
              s"Start to publish ${cachedIndex.size} entries to P2P network."

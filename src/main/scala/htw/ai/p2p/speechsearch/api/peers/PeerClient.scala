@@ -60,7 +60,6 @@ object PeerClient {
       implicit val config: Configuration = Configuration.default.withDefaults
 
       private val client = implicitly[Client[F]]
-      private val M      = implicitly[MonadError[F, Throwable]]
 
       override def getIndexSize: F[Int] = {
         val req = Request[F](GET, uri / IndexSizeKey)

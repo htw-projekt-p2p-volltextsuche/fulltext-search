@@ -59,7 +59,8 @@ case class Index(
   stopWordsLocation: String = "stopwords_de.txt",
   sampleSpeechesLocation: String = "sample_speeches.json",
   insertSampleSpeeches: Boolean = true,
-  distributionInterval: FiniteDuration = 5.minutes
+  distributionInterval: FiniteDuration = 5.minutes,
+  distributionChunkSize: Int = 100
 )
 
 case class Peers(

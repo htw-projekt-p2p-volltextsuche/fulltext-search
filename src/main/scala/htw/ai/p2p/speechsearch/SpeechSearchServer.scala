@@ -123,14 +123,15 @@ object SpeechSearchServer extends IOApp {
       ii = InvertedIndex.lazyDistributed(
              indexRef,
              peerClient,
-             config.index.distributionInterval
+             config.index.distributionInterval,
+             config.index.distributionChunkSize
            )
       _ <- Resource.eval(ii.run)
     } yield ii
 
   private def initPeerClient[
     F[_]: ConcurrentEffect: ContextShift: Timer: Parallel
-  ](config: SpeechSearchConfig) =
+  ](config: SpeechSearchConfig): Resource[F, PeerClient[F]] =
     for {
       implicit0(c: Client[F]) <- makeClient(config)
     } yield PeerClient.impl(
