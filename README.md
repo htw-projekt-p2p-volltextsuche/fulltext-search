@@ -46,14 +46,13 @@ Environment variables need to be prefixed by `CONFIG_FORCE_` except there is an 
 The application can be started with three different storage policies. They work as follows:
 
 * `local`
-  ** Indexing and retrieval is both done locally in memory on the host machine.
+  * Indexing and retrieval is both done locally in memory on the host machine.
 * `distributed`
-  ** Indexing and retrieval is handled by calling the P2P network directly.
-  ** ⚠️ When indexing the request blocks while indexing. This can possibly take a long while. Therefore, an appropriate
-  timeout should be set on the calling machine.
+  * Indexing and retrieval is handled by calling the P2P network directly.
+  * ⚠️ Using this option the index request blocks until all entries are distributed to the P2P network. This can possibly take a long while. Therefore, an appropriate timeout should be set on the calling machine.
 * `lazy-distributed`
-  ** Indexing is done by first storing the index in a local cache and then distributing it on a background thread.
-  ** The interval for scanning the cached indexed can be configured with the option `index.distribution-interval`
+  * Indexing is done by first storing the index in a local cache and then distributing it on a background thread.
+  * The interval for scanning the cached indexed can be configured with the option `index.distribution-interval`
 
 ### Run tests
 
