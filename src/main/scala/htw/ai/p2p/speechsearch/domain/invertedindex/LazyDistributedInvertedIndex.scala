@@ -37,8 +37,8 @@ class LazyDistributedInvertedIndex[F[_]: Sync: Concurrent: Sleep: Logger: Timer]
   override def run: F[Fiber[F, Unit]] =
     Concurrent[F].start {
       for {
-        now    <- Clock[F].monotonic(MILLISECONDS)
-        inst    = Instant.ofEpochMilli(now.millis.plus(distributionInterval).toMillis)
+        now    <- Clock[F].realTime(MILLISECONDS)
+        inst    = Instant.ofEpochMilli(now + distributionInterval.toMillis)
         nextRun = LocalDateTime.ofInstant(inst, ZoneId.systemDefault())
         _ <-
           Logger[F].info(
