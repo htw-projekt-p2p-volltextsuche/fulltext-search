@@ -145,6 +145,15 @@ components:
               required:
                 - criteria
                 - term
+        page-info:
+          type: object
+          properties:
+            offset:
+              type: number
+              default: 0
+            limit:
+              type: number
+              default: 25
       required:
         - search
     Speech:
