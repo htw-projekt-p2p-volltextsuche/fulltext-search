@@ -3,7 +3,7 @@ package htw.ai.p2p.speechsearch.api.index
 import cats.effect.Sync
 import cats.implicits._
 import htw.ai.p2p.speechsearch.api.errors.{ApiError, HttpErrorHandler}
-import htw.ai.p2p.speechsearch.domain.model.speech.Speech
+import htw.ai.p2p.speechsearch.domain.core.model.speech.Speech
 import io.circe.generic.auto._
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec._

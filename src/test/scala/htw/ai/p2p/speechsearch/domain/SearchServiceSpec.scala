@@ -6,10 +6,21 @@ import htw.ai.p2p.speechsearch.BaseShouldSpec
 import htw.ai.p2p.speechsearch.SpeechSearchServer.unsafeLogger
 import htw.ai.p2p.speechsearch.TestData._
 import htw.ai.p2p.speechsearch.TestUtils.{TestSearchResult, readSpeechFromFile}
-import htw.ai.p2p.speechsearch.api.searches.SearchService
-import htw.ai.p2p.speechsearch.domain.model.search.Connector.AndNot
-import htw.ai.p2p.speechsearch.domain.model.search.FilterCriteria.Affiliation
-import htw.ai.p2p.speechsearch.domain.model.search._
+import htw.ai.p2p.speechsearch.api.PageInfo
+import htw.ai.p2p.speechsearch.api.searches.{PaginatedSearch, SearchService}
+import htw.ai.p2p.speechsearch.domain.core.Searcher
+import htw.ai.p2p.speechsearch.domain.core.model.result.SearchResult
+import htw.ai.p2p.speechsearch.domain.core.model.search.Connector.AndNot
+import htw.ai.p2p.speechsearch.domain.core.model.search.FilterCriteria.Affiliation
+import htw.ai.p2p.speechsearch.domain.core.model.search.{
+  Connector,
+  FilterCriteria,
+  Query,
+  QueryElement,
+  QueryFilter,
+  Search
+}
+import htw.ai.p2p.speechsearch.domain.lru.LruRef
 
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
@@ -22,12 +33,13 @@ class SearchServiceSpec extends BaseShouldSpec {
   private val speech2 = readSpeechFromFile("speech_olaf_scholz_23_04_2021.json")
 
   private val searchService = for {
-    ii      <- seededIndex(speech1, speech2)
-    searcher = Searcher(TestTokenizer)
-  } yield SearchService.impl[IO](searcher, ii)
+    ii             <- seededIndex(speech1, speech2)
+    searchCacheRef <- LruRef.empty[IO, Search, SearchResult](0)
+    searcher        = Searcher(TestTokenizer)
+  } yield SearchService.impl[IO](searcher, ii, searchCacheRef)
 
   "A Searcher" should "intersect results of single coherent query" in {
-    val search = Search(Query("Mittwoch Bundesnotbremse"))
+    val search = PaginatedSearch(Search(Query("Mittwoch Bundesnotbremse")))
 
     searchService.flatMap(_.create(search)).asserting {
       _.docIds should contain only speech2.docId
@@ -35,7 +47,8 @@ class SearchServiceSpec extends BaseShouldSpec {
   }
 
   it should "ignore stop words in a query" in {
-    val search = Search(query = Query(terms = "Er soll seine Arbeit machen"))
+    val search =
+      PaginatedSearch(Search(query = Query(terms = "Er soll seine Arbeit machen")))
 
     searchService.flatMap(_.create(search)).asserting {
       _.docIds should contain only speech1.docId
@@ -43,11 +56,13 @@ class SearchServiceSpec extends BaseShouldSpec {
   }
 
   it should "unite the results of an OR query" in {
-    val search = Search(
-      Query(
-        terms = "Mittwoch",
-        additions = List(
-          QueryElement(connector = Connector.Or, terms = "Bundesnotbremse")
+    val search = PaginatedSearch(
+      Search(
+        Query(
+          terms = "Mittwoch",
+          additions = List(
+            QueryElement(connector = Connector.Or, terms = "Bundesnotbremse")
+          )
         )
       )
     )
@@ -62,18 +77,22 @@ class SearchServiceSpec extends BaseShouldSpec {
 
   it should "not fail on empty results" in {
     val emptySearchService = for {
-      ii      <- TestInvertedIndex
-      searcher = Searcher(TestTokenizer)
-    } yield SearchService.impl[IO](searcher, ii)
+      ii             <- TestInvertedIndex
+      searchCacheRef <- LruRef.empty[IO, Search, SearchResult](0)
+      searcher        = Searcher(TestTokenizer)
+    } yield SearchService.impl[IO](searcher, ii, searchCacheRef)
 
-    val search = Search(Query("unknown", List(QueryElement(terms = ""))))
+    val search =
+      PaginatedSearch(Search(Query("unknown", List(QueryElement(terms = "")))))
 
     (emptySearchService >>= (_.create(search))) assertNoException
   }
 
   it should "sort out corresponding results of an AND_NOT query" in {
-    val search = Search(
-      Query("Mittwoch", List(QueryElement(AndNot, "Bundesnotbremse")))
+    val search = PaginatedSearch(
+      Search(
+        Query("Mittwoch", List(QueryElement(AndNot, "Bundesnotbremse")))
+      )
     )
 
     searchService.flatMap(_.create(search)).asserting {
@@ -82,12 +101,14 @@ class SearchServiceSpec extends BaseShouldSpec {
   }
 
   it should "apply filter properly to a query" in {
-    val search = Search(
-      query = Query("Mittwoch"),
-      filter = List(
-        QueryFilter(
-          criteria = Affiliation,
-          value = "spd"
+    val search = PaginatedSearch(
+      Search(
+        query = Query("Mittwoch"),
+        filter = List(
+          QueryFilter(
+            criteria = Affiliation,
+            value = "spd"
+          )
         )
       )
     )
@@ -98,10 +119,12 @@ class SearchServiceSpec extends BaseShouldSpec {
     }
   }
 
-  it should "return the correct total count when there are more results than max_results" in {
-    val search = Search(
-      query = Query("Mittwoch"),
-      maxResults = 1
+  it should "return the correct total count when there are more results than pagination limit" in {
+    val search = PaginatedSearch(
+      Search(
+        query = Query("Mittwoch")
+      ),
+      PageInfo(limit = 1)
     )
 
     searchService.flatMap(_.create(search)).asserting {
@@ -110,11 +133,13 @@ class SearchServiceSpec extends BaseShouldSpec {
   }
 
   it should "ignore blank filter values" in {
-    val search = Search(
-      query = Query("Mittwoch"),
-      filter = List(
-        QueryFilter(criteria = FilterCriteria.Affiliation, value = ""),
-        QueryFilter(criteria = FilterCriteria.Speaker, value = "    ")
+    val search = PaginatedSearch(
+      Search(
+        query = Query("Mittwoch"),
+        filter = List(
+          QueryFilter(criteria = FilterCriteria.Affiliation, value = ""),
+          QueryFilter(criteria = FilterCriteria.Speaker, value = "    ")
+        )
       )
     )
 
@@ -124,11 +149,13 @@ class SearchServiceSpec extends BaseShouldSpec {
   }
 
   it should "combine filters of same type with OR among themselves" in {
-    val search = Search(
-      query = Query("Mittwoch"),
-      filter = List(
-        QueryFilter(criteria = FilterCriteria.Affiliation, value = "spd"),
-        QueryFilter(criteria = FilterCriteria.Affiliation, value = "fdp")
+    val search = PaginatedSearch(
+      Search(
+        query = Query("Mittwoch"),
+        filter = List(
+          QueryFilter(criteria = FilterCriteria.Affiliation, value = "spd"),
+          QueryFilter(criteria = FilterCriteria.Affiliation, value = "fdp")
+        )
       )
     )
 

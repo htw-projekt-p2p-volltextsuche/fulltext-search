@@ -8,10 +8,10 @@ import htw.ai.p2p.speechsearch.SpeechSearchServer.unsafeLogger
 import htw.ai.p2p.speechsearch.TestData.TestTokenizer
 import htw.ai.p2p.speechsearch.TestUtils.readSpeechFromFile
 import htw.ai.p2p.speechsearch.api.errors._
-import htw.ai.p2p.speechsearch.domain.Indexer
-import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex._
-import htw.ai.p2p.speechsearch.domain.invertedindex._
-import htw.ai.p2p.speechsearch.domain.model.speech.Speech
+import htw.ai.p2p.speechsearch.domain.core.Indexer
+import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex
+import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex._
+import htw.ai.p2p.speechsearch.domain.core.model.speech.Speech
 import io.circe.syntax.EncoderOps
 import org.http4s._
 import org.http4s.circe.jsonEncoder

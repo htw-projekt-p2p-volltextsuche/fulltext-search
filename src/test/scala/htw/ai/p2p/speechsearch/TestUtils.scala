@@ -1,9 +1,10 @@
 package htw.ai.p2p.speechsearch
 
-import htw.ai.p2p.speechsearch.domain.GermanStemmer
-import htw.ai.p2p.speechsearch.domain.model.result.SearchResult
-import htw.ai.p2p.speechsearch.domain.model.search.Search
-import htw.ai.p2p.speechsearch.domain.model.speech.{DocId, Speech}
+import htw.ai.p2p.speechsearch.api.searches.PaginatedSearch
+import htw.ai.p2p.speechsearch.domain.core.GermanStemmer
+import htw.ai.p2p.speechsearch.domain.core.model.result.SearchResult
+import htw.ai.p2p.speechsearch.domain.core.model.search.Search
+import htw.ai.p2p.speechsearch.domain.core.model.speech.{DocId, Speech}
 import io.circe._
 import io.circe.jawn.decode
 import org.scalatest.Assertions.fail
@@ -19,6 +20,9 @@ object TestUtils {
 
   def readSpeechFromFile(fileName: String): Speech =
     readEntityFromFile(fileName)(decode[Speech])
+
+  def readSpeechesFromFile(fileName: String): List[Speech] =
+    readEntityFromFile(fileName)(decode[List[Speech]])
 
   def readSearchFromFile(fileName: String): Search =
     readEntityFromFile(fileName)(decode[Search])
@@ -55,6 +59,12 @@ object TestUtils {
   implicit class TestString(self: String) {
 
     def stemmed: String = GermanStemmer(self)
+
+  }
+
+  implicit class TestSearch(self: Search) {
+
+    def paginated: PaginatedSearch = PaginatedSearch(self)
 
   }
 

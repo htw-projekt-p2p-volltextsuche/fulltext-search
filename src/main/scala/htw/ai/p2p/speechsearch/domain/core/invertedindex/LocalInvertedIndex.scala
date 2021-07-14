@@ -1,10 +1,10 @@
-package htw.ai.p2p.speechsearch.domain.invertedindex
+package htw.ai.p2p.speechsearch.domain.core.invertedindex
 
 import cats.effect.Sync
 import cats.effect.concurrent.Ref
 import cats.implicits._
-import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex._
-import htw.ai.p2p.speechsearch.domain.invertedindex.LocalInvertedIndex.AppendableMap
+import InvertedIndex._
+import LocalInvertedIndex.AppendableMap
 
 /**
  * @author Joscha Seelig <jduesentrieb> 2021

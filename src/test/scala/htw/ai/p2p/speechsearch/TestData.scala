@@ -3,15 +3,27 @@ package htw.ai.p2p.speechsearch
 import cats.effect.IO
 import cats.effect.concurrent.Ref
 import htw.ai.p2p.speechsearch.SpeechSearchServer.unsafeLogger
-import htw.ai.p2p.speechsearch.TestUtils.readLineSetFromFile
+import htw.ai.p2p.speechsearch.TestUtils.{
+  readLineSetFromFile,
+  readSpeechFromFile,
+  readSpeechesFromFile
+}
 import htw.ai.p2p.speechsearch.api.index.IndexService
-import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex
-import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex.{PostingList, Term}
-import htw.ai.p2p.speechsearch.domain.model.search.Connector.And
-import htw.ai.p2p.speechsearch.domain.model.search.FilterCriteria.Speaker
-import htw.ai.p2p.speechsearch.domain.model.search._
-import htw.ai.p2p.speechsearch.domain.model.speech.Speech
-import htw.ai.p2p.speechsearch.domain.{Indexer, Tokenizer}
+import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex
+import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex.{
+  PostingList,
+  Term
+}
+import htw.ai.p2p.speechsearch.domain.core.model.search.Connector.And
+import htw.ai.p2p.speechsearch.domain.core.model.search.FilterCriteria.Speaker
+import htw.ai.p2p.speechsearch.domain.core.model.search.{
+  Query,
+  QueryElement,
+  QueryFilter,
+  Search
+}
+import htw.ai.p2p.speechsearch.domain.core.model.speech.Speech
+import htw.ai.p2p.speechsearch.domain.core.{Indexer, Tokenizer}
 
 import java.util.UUID
 
@@ -25,7 +37,6 @@ object TestData {
   val ValidUuid3: UUID = UUID.fromString("dbcb75a0-477c-4bf2-9de3-9487bb164678")
 
   val EntireSearch: Search = Search(
-    maxResults = 15,
     query = Query(
       terms = "hello",
       additions = List(QueryElement(And, "world"))
@@ -51,5 +62,9 @@ object TestData {
       service = IndexService.impl[IO](indexer, ii)
       _      <- service insert List(speeches: _*)
     } yield ii
+
+  def seededIndex: IO[InvertedIndex[IO]] = seededIndex(sampleSpeeches: _*)
+
+  def sampleSpeeches: List[Speech] = readSpeechesFromFile("sample_speeches.json")
 
 }

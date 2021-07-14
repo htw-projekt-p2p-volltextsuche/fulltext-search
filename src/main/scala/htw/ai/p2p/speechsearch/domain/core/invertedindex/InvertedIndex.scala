@@ -1,11 +1,11 @@
-package htw.ai.p2p.speechsearch.domain.invertedindex
+package htw.ai.p2p.speechsearch.domain.core.invertedindex
 
 import cats.Parallel
-import cats.effect.{Concurrent, Sync, Timer}
 import cats.effect.concurrent.Ref
+import cats.effect.{Concurrent, Sync, Timer}
 import htw.ai.p2p.speechsearch.api.peers.PeerClient
-import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex._
-import htw.ai.p2p.speechsearch.domain.model.speech.Posting
+import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex._
+import htw.ai.p2p.speechsearch.domain.core.model.speech.Posting
 import io.chrisdavenport.log4cats.Logger
 import retry.Sleep
 
@@ -153,6 +153,11 @@ object InvertedIndex {
     peerClient: PeerClient[F],
     distributionInterval: FiniteDuration,
     distributionChunkSize: Int
-  ) = new LazyDistributedInvertedIndex[F](indexRef, peerClient, distributionInterval, distributionChunkSize)
+  ) = new LazyDistributedInvertedIndex[F](
+    indexRef,
+    peerClient,
+    distributionInterval,
+    distributionChunkSize
+  )
 
 }

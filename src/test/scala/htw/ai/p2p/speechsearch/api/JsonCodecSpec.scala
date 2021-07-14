@@ -3,8 +3,9 @@ package htw.ai.p2p.speechsearch.api
 import htw.ai.p2p.speechsearch.BaseShouldSpec
 import htw.ai.p2p.speechsearch.TestData._
 import htw.ai.p2p.speechsearch.TestUtils._
-import htw.ai.p2p.speechsearch.domain.model.search.Search
-import htw.ai.p2p.speechsearch.domain.model.speech._
+import htw.ai.p2p.speechsearch.api.searches.PaginatedSearch
+import htw.ai.p2p.speechsearch.domain.core.model.search.Search
+import htw.ai.p2p.speechsearch.domain.core.model.speech.{DocId, Speech}
 import io.circe.jawn._
 import io.circe.syntax.EncoderOps
 import org.scalatest.EitherValues._
@@ -57,4 +58,13 @@ class JsonCodecSpec extends BaseShouldSpec {
 
     decoded.isRight shouldBe true
   }
+
+  "A Paginated Search" should "decode from JSON with default page info" in {
+    val search = PaginatedSearch(search = EntireSearch)
+
+    val decoded = decode[PaginatedSearch](search.asJson.toString())
+
+    decoded.value shouldBe search
+  }
+
 }

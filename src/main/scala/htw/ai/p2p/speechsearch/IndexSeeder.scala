@@ -4,7 +4,7 @@ import cats.effect.{Resource, Sync}
 import cats.implicits._
 import htw.ai.p2p.speechsearch.api.index.IndexService
 import htw.ai.p2p.speechsearch.config.SpeechSearchConfig
-import htw.ai.p2p.speechsearch.domain.model.speech.Speech
+import htw.ai.p2p.speechsearch.domain.core.model.speech.Speech
 import io.chrisdavenport.log4cats.Logger
 import io.circe.jawn.decode
 

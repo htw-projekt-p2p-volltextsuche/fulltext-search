@@ -1,4 +1,4 @@
-package htw.ai.p2p.speechsearch.domain.model.speech
+package htw.ai.p2p.speechsearch.domain.core.model.speech
 
 import htw.ai.p2p.speechsearch.config.CirceConfig._
 import io.circe.Codec

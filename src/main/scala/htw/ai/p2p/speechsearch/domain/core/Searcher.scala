@@ -1,14 +1,15 @@
-package htw.ai.p2p.speechsearch.domain
+package htw.ai.p2p.speechsearch.domain.core
 
 import cats.implicits._
-import htw.ai.p2p.speechsearch.domain.Searcher._
-import htw.ai.p2p.speechsearch.domain.Tokenizer.buildFilterTerm
-import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex._
-import htw.ai.p2p.speechsearch.domain.model.result.SearchResult._
-import htw.ai.p2p.speechsearch.domain.model.result.{ResultEntry, SearchResult}
-import htw.ai.p2p.speechsearch.domain.model.search.Connector._
-import htw.ai.p2p.speechsearch.domain.model.search._
-import htw.ai.p2p.speechsearch.domain.model.speech._
+import htw.ai.p2p.speechsearch.domain.core.Searcher._
+import htw.ai.p2p.speechsearch.domain.core.Tokenizer.buildFilterTerm
+import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex._
+import htw.ai.p2p.speechsearch.domain.core.model.result
+import htw.ai.p2p.speechsearch.domain.core.model.result.SearchResult._
+import htw.ai.p2p.speechsearch.domain.core.model.result.{ResultEntry, SearchResult}
+import htw.ai.p2p.speechsearch.domain.core.model.search.Connector._
+import htw.ai.p2p.speechsearch.domain.core.model.search._
+import htw.ai.p2p.speechsearch.domain.core.model.speech.{DocId, Posting}
 
 import scala.annotation.tailrec
 
@@ -19,7 +20,7 @@ class Searcher(val tokenizer: Tokenizer) {
 
   val PrioritizedOperators = List(AndNot, And, Or)
 
-  def search(search: Search, ii: CachedIndex, indexSize: Int): SearchResult = {
+  def search(search: Search, ii: IndexMap, indexSize: Int): SearchResult = {
     val queryRes = (Or, processQueryChunk(search.query.terms, ii, tokenizer))
     val additionalRes = search.query.additions map (c =>
       c.connector -> processQueryChunk(c.terms, ii, tokenizer)
@@ -32,22 +33,20 @@ class Searcher(val tokenizer: Tokenizer) {
       .toSeq
     val resultEntries = results
       .sortBy(-_._2)
-      .take(search.maxResults)
       .map { case (docId, score) => ResultEntry(docId, score) }
       .toList
 
-    SearchResult(results.size, resultEntries)
+    result.SearchResult(results.size, resultEntries)
   }
 
   private def processQueryChunk(
     query: String,
-    ii: CachedIndex,
+    ii: IndexMap,
     tokenizer: Tokenizer
   ): PartialResult =
-    tokenizer(query).map { term =>
-      val x = ii.getOrElse(term, Nil)
-      x.groupMap(_.docId)(p => (term, p))
-    }.reduceOption((a, b) => a && b)
+    tokenizer(query)
+      .map(term => ii.getOrElse(term, Nil).groupMap(_.docId)(p => (term, p)))
+      .reduceOption((a, b) => a && b)
       .getOrElse(Map.empty)
 
   private def connectResults(
@@ -88,7 +87,7 @@ class Searcher(val tokenizer: Tokenizer) {
 
   private def applyFilter(
     filter: List[QueryFilter]
-  )(chunkResult: PartialResult, ii: CachedIndex): PartialResult =
+  )(chunkResult: PartialResult, ii: IndexMap): PartialResult =
     filter
       .filterNot(_.value.isBlank)
       .groupMapReduce(_.criteria)(retrieveFilterSet(_, ii))((a, b) =>
@@ -102,7 +101,7 @@ class Searcher(val tokenizer: Tokenizer) {
 
   private def retrieveFilterSet(
     filter: QueryFilter,
-    ii: CachedIndex
+    ii: IndexMap
   ): PartialResult = {
     val term = buildFilterTerm(filter.criteria, filter.value)
     ii.getOrElse(term, Nil).groupMap(_.docId)(p => (term, p))
@@ -110,7 +109,7 @@ class Searcher(val tokenizer: Tokenizer) {
 
   private def computeRelevance(
     partial: PartialResult,
-    ii: CachedIndex,
+    ii: IndexMap,
     indexSize: Int
   ): List[(DocId, Score)] =
     for {
@@ -121,7 +120,7 @@ class Searcher(val tokenizer: Tokenizer) {
 
   private def norm(posting: Posting): Score = math.pow(1 + posting.docLen, 0.5)
 
-  private def idf(term: Term, ii: CachedIndex, indexSize: Int): Option[Double] =
+  private def idf(term: Term, ii: IndexMap, indexSize: Int): Option[Double] =
     ii get term map (idf(_, indexSize))
 
   private def idf(docs: PostingList, indexSize: Int): Double =
@@ -131,7 +130,6 @@ class Searcher(val tokenizer: Tokenizer) {
 
 object Searcher {
 
-  type CachedIndex   = Map[Term, PostingList]
   type PartialResult = Map[DocId, List[(Term, Posting)]]
 
   def apply(tokenizer: Tokenizer) = new Searcher(tokenizer)

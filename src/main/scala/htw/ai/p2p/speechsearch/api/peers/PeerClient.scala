@@ -4,19 +4,18 @@ import cats.effect.{Async, ContextShift, Timer}
 import cats.implicits._
 import cats.{MonadError, Parallel}
 import htw.ai.p2p.speechsearch.api.errors._
-import htw.ai.p2p.speechsearch.domain.ImplicitUtilities.FormalizedString
-import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex._
+import htw.ai.p2p.speechsearch.domain.core.ImplicitUtilities.FormalizedString
+import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex._
 import io.chrisdavenport.log4cats.Logger
-import io.circe.Json
 import io.circe.generic.extras.Configuration
 import io.circe.generic.extras.auto._
 import org.http4s.Method._
-import org.http4s.Status.{BadRequest, NotFound, ServiceUnavailable}
+import org.http4s.Status.{NotFound, ServiceUnavailable}
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.circe.CirceSensitiveDataEntityDecoder.circeEntityDecoder
 import org.http4s.client.dsl.Http4sClientDsl
 import org.http4s.client.{Client, ConnectionFailure, UnexpectedStatus}
-import org.http4s.{Request, Uri}
+import org.http4s.{Request, Response, Uri}
 import retry.RetryDetails.{GivingUp, WillDelayAndRetry}
 import retry.RetryPolicies.{fibonacciBackoff, limitRetriesByCumulativeDelay}
 import retry.{RetryDetails, Sleep}
@@ -72,7 +71,7 @@ object PeerClient {
 
       override def getPosting(term: String): F[(Term, PostingList)] =
         client
-          .expectOption[PostingsData](Request(GET, uri / term))
+          .expectOptionOr[PostingsData](Request(GET, uri / term))(mapPeerFailures)
           .recover { case UnexpectedStatus(NotFound) => None }
           .map(term -> _.fold[PostingList](Nil)(_.value))
           .retryOnAllErrors(retryThreshold, retryBackoff)
@@ -82,14 +81,10 @@ object PeerClient {
         terms.parTraverse(getPosting).map(_.toMap)
 
       override def insert(term: String, postings: PostingList): F[Boolean] = {
-        val req = Request[F](PUT, uri / "merge" / term)
-          .withEntity(InsertionData(postings))
+        val req =
+          Request[F](PUT, uri / "merge" / term).withEntity(InsertionData(postings))
         client
-          .expectOr[SuccessData](req) {
-            case ServiceUnavailable(e) =>
-              (PeerServiceUnavailable(e.body.toString()): Throwable).pure[F]
-            case resp => resp.as[ErrorData].map(e => PeerServerFailure(e.errorMsg))
-          }
+          .expectOr[SuccessData](req)(mapPeerFailures)
           .map(!_.error)
           .retryOnAllErrors(retryThreshold, retryBackoff)
           .adaptDomainError
@@ -105,6 +100,16 @@ object PeerClient {
               case _                         => Fail
             }
         } map (_.toMap)
+
+      private def mapPeerFailures(response: Response[F]): F[Throwable] =
+        response match {
+          case ServiceUnavailable(_) =>
+            (PeerServiceUnavailable(): Throwable).pure[F]
+          case ServiceUnavailable(e) =>
+            (PeerServiceUnavailable(e.body.toString()): Throwable).pure[F]
+          case resp => resp.as[ErrorData].map(e => PeerServerFailure(e.errorMsg))
+        }
+
     }
 
   sealed trait ExecutionStatus

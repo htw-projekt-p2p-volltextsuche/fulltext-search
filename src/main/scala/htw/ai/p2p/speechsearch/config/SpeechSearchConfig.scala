@@ -18,6 +18,7 @@ import scala.concurrent.duration.{DurationInt, FiniteDuration}
 case class SpeechSearchConfig(
   server: Server = Server(),
   index: Index = Index(),
+  search: Search = Search(),
   peers: Peers = Peers()
 )
 
@@ -61,6 +62,10 @@ case class Index(
   insertSampleSpeeches: Boolean = true,
   distributionInterval: FiniteDuration = 5.minutes,
   distributionChunkSize: Int = 100
+)
+
+case class Search(
+  cacheSize: Int = 10
 )
 
 case class Peers(

@@ -1,8 +1,8 @@
-package htw.ai.p2p.speechsearch.domain
+package htw.ai.p2p.speechsearch.domain.core
 
-import htw.ai.p2p.speechsearch.domain.Tokenizer._
-import htw.ai.p2p.speechsearch.domain.model.search.{FilterCriteria, Search}
-import htw.ai.p2p.speechsearch.domain.model.search.FilterCriteria.Affiliation
+import htw.ai.p2p.speechsearch.domain.core.Tokenizer._
+import htw.ai.p2p.speechsearch.domain.core.model.search.{FilterCriteria, Search}
+import htw.ai.p2p.speechsearch.domain.core.model.search.FilterCriteria.Affiliation
 
 import scala.language.postfixOps
 

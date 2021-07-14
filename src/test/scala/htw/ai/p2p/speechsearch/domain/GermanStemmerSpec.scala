@@ -2,6 +2,7 @@ package htw.ai.p2p.speechsearch.domain
 
 import htw.ai.p2p.speechsearch.BaseShouldSpec
 import htw.ai.p2p.speechsearch.TestUtils._
+import htw.ai.p2p.speechsearch.domain.core.GermanStemmer
 import org.scalatest.prop.TableDrivenPropertyChecks._
 
 import java.nio.charset.{Charset, CharsetDecoder, CodingErrorAction}

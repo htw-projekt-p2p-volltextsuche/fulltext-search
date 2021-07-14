@@ -1,9 +1,9 @@
-package htw.ai.p2p.speechsearch.domain.invertedindex
+package htw.ai.p2p.speechsearch.domain.core.invertedindex
 
 import cats.effect.Sync
 import cats.implicits._
 import htw.ai.p2p.speechsearch.api.peers.PeerClient
-import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex._
+import InvertedIndex._
 import io.chrisdavenport.log4cats.Logger
 
 /**

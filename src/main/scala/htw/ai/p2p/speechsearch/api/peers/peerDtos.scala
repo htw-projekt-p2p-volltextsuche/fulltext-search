@@ -1,6 +1,6 @@
 package htw.ai.p2p.speechsearch.api.peers
 
-import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex.PostingList
+import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex.PostingList
 import io.circe.Json
 
 /**

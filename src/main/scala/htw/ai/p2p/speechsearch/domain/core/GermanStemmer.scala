@@ -1,7 +1,7 @@
-package htw.ai.p2p.speechsearch.domain
+package htw.ai.p2p.speechsearch.domain.core
 
 import cats.implicits._
-import htw.ai.p2p.speechsearch.domain.GermanStemmer.{Regions, Suffix, Word}
+import htw.ai.p2p.speechsearch.domain.core.GermanStemmer.{Regions, Suffix, Word}
 
 /**
  * This is an implementation of the snowball stemming for

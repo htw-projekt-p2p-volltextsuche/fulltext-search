@@ -1,4 +1,4 @@
-package htw.ai.p2p.speechsearch.domain.model.search
+package htw.ai.p2p.speechsearch.domain.core.model.search
 
 import enumeratum.values._
 

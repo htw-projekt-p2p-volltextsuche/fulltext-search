@@ -1,9 +1,9 @@
-package htw.ai.p2p.speechsearch.domain
+package htw.ai.p2p.speechsearch.domain.core
 
-import htw.ai.p2p.speechsearch.domain.Tokenizer.buildFilterTerm
-import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex.Term
-import htw.ai.p2p.speechsearch.domain.model.search.FilterCriteria._
-import htw.ai.p2p.speechsearch.domain.model.speech._
+import htw.ai.p2p.speechsearch.domain.core.Tokenizer.buildFilterTerm
+import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex.Term
+import htw.ai.p2p.speechsearch.domain.core.model.search.FilterCriteria._
+import htw.ai.p2p.speechsearch.domain.core.model.speech.{Posting, Speech}
 
 /**
  * Main unit for the management of the inverted index.

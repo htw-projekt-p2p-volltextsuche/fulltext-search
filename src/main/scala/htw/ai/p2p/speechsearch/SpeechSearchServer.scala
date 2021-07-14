@@ -12,9 +12,12 @@ import htw.ai.p2p.speechsearch.api.peers.PeerClient
 import htw.ai.p2p.speechsearch.api.searches.{SearchRoutes, SearchService}
 import htw.ai.p2p.speechsearch.config.SpeechSearchConfig._
 import htw.ai.p2p.speechsearch.config._
-import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex
-import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex.{PostingList, Term}
-import htw.ai.p2p.speechsearch.domain.{Indexer, Searcher, Tokenizer}
+import htw.ai.p2p.speechsearch.domain.core._
+import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex
+import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex._
+import htw.ai.p2p.speechsearch.domain.core.model.result.SearchResult
+import htw.ai.p2p.speechsearch.domain.core.model.search.Search
+import htw.ai.p2p.speechsearch.domain.lru.LruRef
 import io.chrisdavenport.log4cats.Logger
 import io.chrisdavenport.log4cats.slf4j.Slf4jLogger
 import org.http4s.client.Client
@@ -51,8 +54,10 @@ object SpeechSearchServer extends IOApp {
       ii          <- initInvertedIndex[F](config)
       indexService = IndexService.impl(indexer, ii)
 
+      searchCacheRef <-
+        Resource.eval(LruRef.empty[F, Search, SearchResult](config.search.cacheSize))
       searcher      = Searcher(tokenizer)
-      searchService = SearchService.impl(searcher, ii)
+      searchService = SearchService.impl(searcher, ii, searchCacheRef)
 
       implicit0(eh: HttpErrorHandler[F, ApiError]) <-
         Resource.pure[F, HttpErrorHandler[F, ApiError]](new ApiErrorHandler)

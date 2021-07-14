@@ -1,46 +1,54 @@
 package htw.ai.p2p.speechsearch.api.searches
 
 import cats.Parallel
+import cats.data.OptionT
 import cats.effect._
 import cats.implicits._
-import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex
-import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex.{PostingList, Term}
-import htw.ai.p2p.speechsearch.domain.model.result.SearchResult
-import htw.ai.p2p.speechsearch.domain.model.search.Search
-import htw.ai.p2p.speechsearch.domain.{Searcher, Tokenizer}
+import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex
+import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex._
+import htw.ai.p2p.speechsearch.domain.core.model.result.{ResultEntry, SearchResult}
+import htw.ai.p2p.speechsearch.domain.core.model.search.Search
+import htw.ai.p2p.speechsearch.domain.core.{BackgroundTask, Searcher, Tokenizer}
+import htw.ai.p2p.speechsearch.domain.lru.{LruCache, LruRef}
 import io.chrisdavenport.log4cats.Logger
+import retry.Sleep
+
+import java.time.{Instant, LocalDateTime, ZoneId}
+import scala.concurrent.duration.{DurationInt, FiniteDuration, MILLISECONDS}
 
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
  */
 trait SearchService[F[_]] {
 
-  def create(search: Search): F[SearchResult]
+  def create(search: PaginatedSearch): F[SearchResult]
 
 }
 
 object SearchService {
 
-  type CachedIndex = Map[Term, PostingList]
-
   def apply[F[_]](implicit ev: SearchService[F]): SearchService[F] = ev
 
-  def impl[F[_]: Sync: Parallel: Logger](
+  type SearchCache = LruCache[Search, SearchResult]
+
+  def impl[F[_]: Sync: Parallel: Concurrent: Timer: Logger](
     searcher: Searcher,
-    ii: InvertedIndex[F]
+    ii: InvertedIndex[F],
+    cacheRef: LruRef[F, Search, SearchResult]
   ): SearchService[F] = new SearchService[F] {
 
-    override def create(search: Search): F[SearchResult] =
-      for {
-        prefetched <- retrieveInvertedIndex(search, searcher.tokenizer)
-        size       <- ii.size
-      } yield searcher.search(search, prefetched, size)
+    override def create(search: PaginatedSearch): F[SearchResult] =
+      OptionT(cacheRef.get(search.search))
+        .getOrElseF(retrieveSearchResult(search.search))
+        .map(_.paginate(search.pageInfo))
 
-    private def retrieveInvertedIndex(
-      search: Search,
-      tokenizer: Tokenizer
-    ): F[CachedIndex] =
-      ii.getAll(tokenizer.extractDistinctTokens(search))
+    private def retrieveSearchResult(search: Search): F[SearchResult] =
+      for {
+        prefetched <- ii getAll searcher.tokenizer.extractDistinctTokens(search)
+        size       <- ii.size
+        result      = searcher.search(search, prefetched, size)
+        _          <- cacheRef.put(search, result)
+      } yield searcher.search(search, prefetched, size)
 
   }
 

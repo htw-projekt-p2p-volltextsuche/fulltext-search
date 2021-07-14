@@ -1,4 +1,4 @@
-package htw.ai.p2p.speechsearch.domain
+package htw.ai.p2p.speechsearch.domain.core
 
 import mojolly.inflector.InflectorImports._
 

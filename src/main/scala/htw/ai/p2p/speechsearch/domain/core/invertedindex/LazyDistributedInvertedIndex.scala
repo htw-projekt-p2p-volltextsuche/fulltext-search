@@ -1,17 +1,18 @@
-package htw.ai.p2p.speechsearch.domain.invertedindex
+package htw.ai.p2p.speechsearch.domain.core.invertedindex
 
 import cats.Parallel
 import cats.effect.concurrent.Ref
 import cats.effect.{Clock, Concurrent, Fiber, Sync, Timer}
 import cats.implicits._
 import htw.ai.p2p.speechsearch.api.peers.PeerClient
-import htw.ai.p2p.speechsearch.domain.ImplicitUtilities.FormalizedString
-import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex._
+import htw.ai.p2p.speechsearch.domain.core.ImplicitUtilities.FormalizedString
+import htw.ai.p2p.speechsearch.domain.core.BackgroundTask
+import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex._
 import io.chrisdavenport.log4cats.Logger
 import retry.Sleep
 
 import java.time.{Instant, LocalDateTime, ZoneId}
-import scala.concurrent.duration.{DurationLong, FiniteDuration, MILLISECONDS}
+import scala.concurrent.duration.{FiniteDuration, MILLISECONDS}
 
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
@@ -24,7 +25,7 @@ class LazyDistributedInvertedIndex[
   distributionInterval: FiniteDuration,
   distributionChunkSize: Int
 ) extends LocalInvertedIndex[F](indexRef)
-    with IndexDistributor[F] {
+    with BackgroundTask[F] {
 
   override def size: F[Int] = client.getIndexSize
 
@@ -55,7 +56,8 @@ class LazyDistributedInvertedIndex[
     }
 
   private def distributeIndex(cachedIndex: IndexMap): F[Unit] =
-    cachedIndex.grouped(distributionChunkSize).toSeq.parTraverse(publish) *> ().pure[F]
+    cachedIndex.grouped(distributionChunkSize).toSeq.parTraverse(publish) *> ()
+      .pure[F]
 
   private def publish(cachedIndex: IndexMap): F[Unit] =
     for {

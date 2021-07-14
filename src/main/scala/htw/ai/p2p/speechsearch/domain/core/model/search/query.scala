@@ -1,8 +1,8 @@
-package htw.ai.p2p.speechsearch.domain.model.search
+package htw.ai.p2p.speechsearch.domain.core.model.search
 
 import enumeratum.EnumEntry.Snakecase
 import enumeratum._
-import htw.ai.p2p.speechsearch.domain.model.search.Connector.Or
+import Connector.Or
 
 /**
  * @author Joscha Seelig <jduesentrieb> 2021

@@ -2,11 +2,14 @@ package htw.ai.p2p.speechsearch.api.index
 
 import cats.effect._
 import cats.implicits._
-import htw.ai.p2p.speechsearch.domain.ImplicitUtilities.FormalizedString
-import htw.ai.p2p.speechsearch.domain.Indexer
-import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex
-import htw.ai.p2p.speechsearch.domain.invertedindex.InvertedIndex.{IndexMap, Term}
-import htw.ai.p2p.speechsearch.domain.model.speech.{Posting, Speech}
+import htw.ai.p2p.speechsearch.domain.core.ImplicitUtilities.FormalizedString
+import htw.ai.p2p.speechsearch.domain.core.Indexer
+import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex
+import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex.{
+  IndexMap,
+  Term
+}
+import htw.ai.p2p.speechsearch.domain.core.model.speech.{Posting, Speech}
 import io.chrisdavenport.log4cats.Logger
 
 /**

@@ -1,6 +1,6 @@
 package htw.ai.p2p.speechsearch.api.index
 
-import htw.ai.p2p.speechsearch.domain.model.speech.Speech
+import htw.ai.p2p.speechsearch.domain.core.model.speech.Speech
 
 /**
  * @author Joscha Seelig <jduesentrieb> 2021

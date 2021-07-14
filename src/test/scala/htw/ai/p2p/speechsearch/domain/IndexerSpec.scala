@@ -4,6 +4,7 @@ import cats.implicits.catsSyntaxSemigroup
 import htw.ai.p2p.speechsearch.BaseShouldSpec
 import htw.ai.p2p.speechsearch.TestData.TestTokenizer
 import htw.ai.p2p.speechsearch.TestUtils.{TestString, readSpeechFromFile}
+import htw.ai.p2p.speechsearch.domain.core.Indexer
 
 /**
  * @author Joscha Seelig <jduesentrieb> 2021

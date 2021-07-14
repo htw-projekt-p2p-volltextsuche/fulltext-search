@@ -1,20 +1,18 @@
 {
-  "search": {
-    "query": {
-      "terms": "hello",
-      "additions": [
-        {
-          "connector": "and",
-          "terms": "world"
-        }
-      ]
-    },
-    "filter": [
+  "query": {
+    "terms": "hello",
+    "additions": [
       {
-        "criteria": "speaker",
-        "value": "Nelson Mandela"
+        "connector": "and",
+        "terms": "world"
       }
-    ],
-    "max_results": 15
-  }
+    ]
+  },
+  "filter": [
+    {
+      "criteria": "speaker",
+      "value": "Nelson Mandela"
+    }
+  ],
+  "max_results": 15
 }

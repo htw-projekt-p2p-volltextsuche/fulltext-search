@@ -5,7 +5,8 @@ import htw.ai.p2p.speechsearch.BaseShouldSpec
 import htw.ai.p2p.speechsearch.SpeechSearchServer.unsafeLogger
 import htw.ai.p2p.speechsearch.TestData._
 import htw.ai.p2p.speechsearch.api.peers.{PeerClient, PostingsData}
-import htw.ai.p2p.speechsearch.domain.model.speech.{DocId, Posting}
+import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex
+import htw.ai.p2p.speechsearch.domain.core.model.speech.{DocId, Posting}
 import org.http4s.Method.GET
 import org.http4s.Request
 import org.http4s.client.Client

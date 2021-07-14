@@ -3,8 +3,8 @@ package htw.ai.p2p.speechsearch.domain
 import htw.ai.p2p.speechsearch.BaseShouldSpec
 import htw.ai.p2p.speechsearch.TestData.TestTokenizer
 import htw.ai.p2p.speechsearch.TestUtils.TestString
-import htw.ai.p2p.speechsearch.domain.Tokenizer.buildFilterTerm
-import htw.ai.p2p.speechsearch.domain.model.search.FilterCriteria.Affiliation
+import htw.ai.p2p.speechsearch.domain.core.Tokenizer.buildFilterTerm
+import htw.ai.p2p.speechsearch.domain.core.model.search.FilterCriteria.Affiliation
 import org.scalatest.prop.TableDrivenPropertyChecks._
 
 /**

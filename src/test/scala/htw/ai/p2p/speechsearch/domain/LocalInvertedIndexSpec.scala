@@ -1,13 +1,8 @@
 package htw.ai.p2p.speechsearch.domain
 
 import htw.ai.p2p.speechsearch.BaseShouldSpec
-import htw.ai.p2p.speechsearch.TestData.{
-  TestInvertedIndex,
-  ValidUuid1,
-  ValidUuid2,
-  ValidUuid3
-}
-import htw.ai.p2p.speechsearch.domain.model.speech._
+import htw.ai.p2p.speechsearch.TestData._
+import htw.ai.p2p.speechsearch.domain.core.model.speech.{DocId, Posting}
 
 /**
  * @author Joscha Seelig <jduesentrieb> 2021
