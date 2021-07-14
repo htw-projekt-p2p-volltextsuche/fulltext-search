@@ -4,7 +4,7 @@ import cats.effect.{Async, ContextShift, Timer}
 import cats.implicits._
 import cats.{MonadError, Parallel}
 import htw.ai.p2p.speechsearch.api.errors._
-import htw.ai.p2p.speechsearch.domain.core.ImplicitUtilities.FormalizedString
+import htw.ai.p2p.speechsearch.domain.ImplicitUtilities.FormalizedString
 import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex._
 import io.chrisdavenport.log4cats.Logger
 import io.circe.generic.extras.Configuration
@@ -162,7 +162,7 @@ object PeerClient {
         case WillDelayAndRetry(_, retriesSoFar, _) =>
           Logger[F].error(e)(
             s"Failure in P2P network. Tried ${retriesSoFar + 1} " +
-              s"${"time".formalize(retriesSoFar + 1)} yet. Scheduled another retry."
+              s"${"time".formalized(retriesSoFar + 1)} yet. Scheduled another retry."
           )
         case GivingUp(totalRetries, _) =>
           Logger[F].error(e)(

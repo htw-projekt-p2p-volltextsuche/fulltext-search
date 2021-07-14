@@ -2,7 +2,7 @@ package htw.ai.p2p.speechsearch.api.index
 
 import cats.effect._
 import cats.implicits._
-import htw.ai.p2p.speechsearch.domain.core.ImplicitUtilities.FormalizedString
+import htw.ai.p2p.speechsearch.domain.ImplicitUtilities.FormalizedString
 import htw.ai.p2p.speechsearch.domain.core.Indexer
 import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex
 import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex.{
@@ -51,7 +51,7 @@ object IndexService {
           response <- indexAll(indexEntries, speeches: _*)
           _ <-
             Logger[F].info(
-              s"Successfully indexed ${speeches.size} ${"speech".formalize(speeches.size)}."
+              s"Successfully indexed ${speeches.size} ${"speech".formalized(speeches.size)}."
             )
         } yield response
       }
@@ -61,7 +61,7 @@ object IndexService {
         speeches: Speech*
       ): F[IndexSuccess] =
         (ii :++ indexEntries) *> IndexSuccess(
-          s"${speeches.size} ${"speech".formalize(speeches.size)} have been successfully indexed: " +
+          s"${speeches.size} ${"speech".formalized(speeches.size)} have been successfully indexed: " +
             s"${speeches.map(_.docId.self).mkString(", ")}"
         ).pure[F]
 

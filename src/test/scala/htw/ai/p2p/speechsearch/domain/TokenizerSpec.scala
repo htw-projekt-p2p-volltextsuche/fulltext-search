@@ -16,31 +16,35 @@ class TokenizerSpec extends BaseShouldSpec {
 
   private val SampleText = "ERP steht für Enterprise-Resource-Planning oder " +
     "Unternehmens-Informationssystem, womit alle geschäftsrelevanten " +
-    "Bereiche eines Unternehmens im Zusammenhang betrachtet werden können." +
-    "NonBreaking\u00A0-Space"
+    "Bereiche eines Unternehmens im Zusammenhang betrachtet werden können."
 
   "A Tokenizer" should "tokenize words with hyphens as one token" in {
     val tokens = Tokenizer apply SampleText
 
     tokens should contain allOf (
       "enterprise-resource-planning".stemmed,
-      "unternehmens-informationssystem".stemmed,
-      "NonBreaking".stemmed,
-      "Space".stemmed
+      "unternehmens-informationssystem".stemmed
     )
+  }
+
+  it should "interpret words separated by non breaking spaces as one term" in {
+    val tokens =
+      Tokenizer apply "NonBreaking\u00A0Space NonBreaking\u00A0-\u00A0Space"
+
+    tokens should have size 2
   }
 
   it should "remove stop words when tokenizing" in {
     val tokens = Tokenizer apply SampleText
 
-    tokens should have size 12
+    tokens should have size 10
   }
 
   private val normalizedAffiliations = Table(
     ("raw", "normalized"),
-    ("Die Grünen", "die-grünen"),
-    ("Bündnis 90 / Die Grünen", "die-grünen"),
-    ("Grüne", "die-grünen"),
+    ("Die Grünen", "bündnis-90-die-grünen"),
+    ("Bündnis 90 / Die Grünen", "bündnis-90-die-grünen"),
+    ("Grüne", "bündnis-90-die-grünen"),
     ("CDU", "cdu-csu"),
     ("CSU", "cdu-csu"),
     ("CDU / CSU", "cdu-csu"),

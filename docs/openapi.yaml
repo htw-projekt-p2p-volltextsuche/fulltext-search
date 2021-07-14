@@ -28,6 +28,15 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Search'
+  /searches/cache/evict:
+    get:
+      tags:
+        - search
+      summary: Evicts the cache for search results
+      operationId: evict-search-cache
+      responses:
+        '200':
+          description: successful eviction
   /index/speech:
     post:
       tags:

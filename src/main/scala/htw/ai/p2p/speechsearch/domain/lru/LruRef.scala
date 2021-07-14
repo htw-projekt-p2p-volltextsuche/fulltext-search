@@ -50,4 +50,8 @@ class LruRef[F[_]: Monad, K, V](lruRef: Ref[F, LruCache[K, V]]) {
   /** @return The set of keys present */
   def keySet: F[Set[K]] = lruRef.get.map(_.keySet)
 
+  def clear: F[Set[K]] = lruRef
+    .getAndUpdate(lru => LruCache[K, V](lru.size))
+    .map(_.keySet)
+
 }

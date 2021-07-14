@@ -5,7 +5,7 @@ import cats.effect.concurrent.Ref
 import cats.effect.{Clock, Concurrent, Fiber, Sync, Timer}
 import cats.implicits._
 import htw.ai.p2p.speechsearch.api.peers.PeerClient
-import htw.ai.p2p.speechsearch.domain.core.ImplicitUtilities.FormalizedString
+import htw.ai.p2p.speechsearch.domain.ImplicitUtilities.FormalizedString
 import htw.ai.p2p.speechsearch.domain.core.BackgroundTask
 import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex._
 import io.chrisdavenport.log4cats.Logger
@@ -67,7 +67,7 @@ class LazyDistributedInvertedIndex[
       failed <- client.insert(cachedIndex)
       _ <- Logger[F].info(
              s"Executed index distribution. Insertion of ${failed.size} " +
-               s"${"entry".formalize(failed.size)} failed."
+               s"${"entry".formalized(failed.size)} failed."
            )
       _ <- insertAll(failed)
     } yield ()

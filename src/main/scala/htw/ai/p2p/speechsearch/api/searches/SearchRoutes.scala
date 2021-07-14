@@ -3,6 +3,7 @@ package htw.ai.p2p.speechsearch.api.searches
 import cats.effect.Sync
 import cats.implicits._
 import htw.ai.p2p.speechsearch.api.errors.{ApiError, HttpErrorHandler}
+import htw.ai.p2p.speechsearch.domain.ImplicitUtilities._
 import htw.ai.p2p.speechsearch.domain.core.model.result.SearchResult._
 import org.http4s.HttpRoutes
 import org.http4s.circe.CirceEntityCodec._
@@ -15,14 +16,20 @@ import org.http4s.headers.Allow
 class SearchRoutes[F[_]: Sync] private (searchService: SearchService[F])
     extends Http4sDsl[F] {
 
+  private val Searches = "searches"
+
   private val routes: HttpRoutes[F] = HttpRoutes.of[F] {
-    case req @ POST -> Root / "searches" =>
+    case req @ POST -> Root / Searches =>
       for {
         search <- req.as[PaginatedSearch]
         result <- searchService.create(search)
         resp   <- Ok(result)
       } yield resp
-    case _ @_ -> Root / "searches" => MethodNotAllowed(Allow(POST))
+    case GET -> Root / Searches / "cache" / "evict" =>
+      searchService.evictCache >>= (e =>
+        Ok(s"Removed ${e.size} ${"element".formalized(e.size)} from the cache.")
+      )
+    case _ @_ -> Root / Searches => MethodNotAllowed(Allow(POST))
   }
 }
 

@@ -1,4 +1,4 @@
-package htw.ai.p2p.speechsearch.domain.core
+package htw.ai.p2p.speechsearch.domain
 
 import mojolly.inflector.InflectorImports._
 
@@ -9,7 +9,7 @@ object ImplicitUtilities {
 
   implicit class FormalizedString(self: String) {
 
-    def formalize(amount: Int): String =
+    def formalized(amount: Int): String =
       if (amount == 1) self.singularize else self.pluralize
 
   }
