@@ -13,7 +13,7 @@ class Tokenizer(stopWords: Set[String] = Set.empty) {
 
   def apply(text: String): List[String] =
     DelimiterPattern
-      .split(text toLowerCase)
+      .split(text.replaceAll("[\u00A0 ]", "").toLowerCase)
       .view
       .filterNot(stopWords contains)
       .filterNot(_ isBlank)
@@ -39,7 +39,8 @@ object Tokenizer {
 
   def apply(stopWords: Set[String]) = new Tokenizer(stopWords)
 
-  private val DelimiterPattern     = """(\W+-\W*|\W*-\W+|[\s,.?!:;\\^`“„‟'"  §)(])+""" r
+  private val DelimiterPattern =
+    """(\W+-\W*|\W*-\W+|[\s,.?!:;\\/^`“„‟'"–—  §)(])+""" r
   private val NormalizationPattern = """[^\wäöüÄÖÜß]+""".r
 
   private val affiliationNorms: Map[String, String] =
