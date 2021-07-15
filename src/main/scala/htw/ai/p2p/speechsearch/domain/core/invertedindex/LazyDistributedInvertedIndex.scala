@@ -85,17 +85,19 @@ class LazyDistributedInvertedIndex[
       _ <- insertAll(retries)
     } yield ()
 
+  private def updateTtlMap(ttlMap: TtlMap, failed: IndexMap): TtlMap = {
+    val failedTtl = failed.keySet.map { term =>
+      term -> ttlMap.getOrElse(term, insertionTtl)
+    }
+    (failedTtl |+| ttlMap.toSet).map { case (term, ttl) => term -> (ttl - 1) }
+      .filter(_._2 > 0)
+      .toMap
+  }
+
   private def removeHopelessRetries(
     ttlMap: TtlMap,
     failed: IndexMap
   ): IndexMap = ttlMap.keySet.map(term => term -> failed.getOrElse(term, Nil)).toMap
-
-  private def updateTtlMap(ttlMap: TtlMap, failed: IndexMap): TtlMap =
-    (failed.keySet.map(term =>
-      term -> ttlMap.getOrElse(term, insertionTtl)
-    ) |+| ttlMap.toSet).map { case (term, ttl) => term -> (ttl - 1) }
-      .filter(_._2 > 0)
-      .toMap
 
 }
 
