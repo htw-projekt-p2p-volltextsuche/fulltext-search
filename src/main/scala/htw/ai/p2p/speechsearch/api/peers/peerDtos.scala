@@ -9,7 +9,7 @@ import io.circe.Json
 sealed trait PeerResponse
 
 case class SuccessData(
-  error: Boolean,
+  error: Boolean = false,
   key: String,
   value: Json = Json.Null
 ) extends PeerResponse

@@ -9,6 +9,7 @@ import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex._
 import io.chrisdavenport.log4cats.Logger
 import io.circe.generic.extras.Configuration
 import io.circe.generic.extras.auto._
+import io.circe.syntax.EncoderOps
 import org.http4s.Method._
 import org.http4s.Status.{NotFound, ServiceUnavailable}
 import org.http4s.circe.CirceEntityCodec._
@@ -60,14 +61,12 @@ object PeerClient {
 
       private val client = implicitly[Client[F]]
 
-      override def getIndexSize: F[Int] = {
-        val req = Request[F](GET, uri / IndexSizeKey)
+      override def getIndexSize: F[Int] =
         client
-          .expect[SuccessData](req)
+          .expectOr[SuccessData](uri / IndexSizeKey)(mapPeerFailures)
           .flatMap(_.value.as[Int].liftTo[F])
           .retryOnAllErrors(retryThreshold, retryBackoff)
           .adaptDomainError
-      }
 
       override def getPosting(term: String): F[(Term, PostingList)] =
         client
@@ -107,7 +106,10 @@ object PeerClient {
             (PeerServiceUnavailable(): Throwable).pure[F]
           case ServiceUnavailable(e) =>
             (PeerServiceUnavailable(e.body.toString()): Throwable).pure[F]
-          case resp => resp.as[ErrorData].map(e => PeerServerFailure(e.errorMsg))
+          case resp =>
+            resp.as[ErrorData].map { e =>
+              PeerServerFailure(s"Failure in P2P network: ${e.errorMsg}")
+            }
         }
 
     }
@@ -139,6 +141,7 @@ object PeerClient {
 
     import retry.syntax.all._
     def adaptDomainError: F[A] = self.adaptError {
+      case e: PeerError         => e
       case e: ConnectionFailure => PeerConnectionError(e)
       case e                    => PeerServerError(e)
     }
