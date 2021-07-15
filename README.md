@@ -39,6 +39,7 @@ Environment variables need to be prefixed by `CONFIG_FORCE_` except there is an 
 |index.insert-sample-speeches|Inserts sample speeches on startup when set|-|false|
 |index.distribution-interval|Interval for scanning and distributing the cached index in ms|INDEX_DISTRIBUTION_INTERVAL|120000|
 |index.distribution-chunk-size|Size of each concurrently processed chunk of the cached index|INDEX_DISTRIBUTION_CHUNK_SIZE|100|
+|index.insertion-ttl|Amount of retries for the insertion of single index entry|INDEX_INSERTION_TTL|5|
 |search.cache-size|Size of cache for search results|SEARCH_CACHE_SIZE|5|
 |peers.uri|Entrypoint to the P2P network|-|http://localhost:8090/|
 |peers.log-body|Enables client logging of response bodies|PEERS_LOG_BODY|true|

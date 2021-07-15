@@ -8,10 +8,12 @@ import htw.ai.p2p.speechsearch.api.peers.PeerClient
 import htw.ai.p2p.speechsearch.domain.ImplicitUtilities.FormalizedString
 import htw.ai.p2p.speechsearch.domain.core.BackgroundTask
 import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex._
+import htw.ai.p2p.speechsearch.domain.core.invertedindex.LazyDistributedInvertedIndex.TtlMap
 import io.chrisdavenport.log4cats.Logger
 import retry.Sleep
 
 import java.time.{Instant, LocalDateTime, ZoneId}
+import scala.collection.immutable
 import scala.concurrent.duration.{FiniteDuration, MILLISECONDS}
 
 /**
@@ -21,9 +23,11 @@ class LazyDistributedInvertedIndex[
   F[_]: Sync: Concurrent: Parallel: Sleep: Logger: Timer
 ](
   indexRef: Ref[F, IndexMap],
+  ttlMapRef: Ref[F, TtlMap],
   client: PeerClient[F],
   distributionInterval: FiniteDuration,
-  distributionChunkSize: Int
+  distributionChunkSize: Int,
+  insertionTtl: Int
 ) extends LocalInvertedIndex[F](indexRef)
     with BackgroundTask[F] {
 
@@ -65,11 +69,38 @@ class LazyDistributedInvertedIndex[
              s"Start to publish ${cachedIndex.size} entries to P2P network."
            )
       failed <- client.insert(cachedIndex)
+      ttlMap <- ttlMapRef.updateAndGet(updateTtlMap(_, failed))
+      retries = removeHopelessRetries(ttlMap, failed)
+      dropped = failed.size - retries.size
+      _ <-
+        if (dropped > 0)
+          Logger[F].info(
+            s"Dropped $dropped ${"entry".formalized(dropped)} due to exceeded TTL($insertionTtl)."
+          )
+        else ().pure[F]
       _ <- Logger[F].info(
              s"Executed index distribution. Insertion of ${failed.size} " +
                s"${"entry".formalized(failed.size)} failed."
            )
-      _ <- insertAll(failed)
+      _ <- insertAll(retries)
     } yield ()
+
+  private def removeHopelessRetries(
+    ttlMap: TtlMap,
+    failed: IndexMap
+  ): IndexMap = ttlMap.keySet.map(term => term -> failed.getOrElse(term, Nil)).toMap
+
+  private def updateTtlMap(ttlMap: TtlMap, failed: IndexMap): TtlMap =
+    (failed.keySet.map(term =>
+      term -> ttlMap.getOrElse(term, insertionTtl)
+    ) |+| ttlMap.toSet).map { case (term, ttl) => term -> (ttl - 1) }
+      .filter(_._2 > 0)
+      .toMap
+
+}
+
+object LazyDistributedInvertedIndex {
+
+  type TtlMap = Map[Term, Int]
 
 }

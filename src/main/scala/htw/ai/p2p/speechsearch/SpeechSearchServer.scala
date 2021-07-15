@@ -124,12 +124,15 @@ object SpeechSearchServer extends IOApp {
   ](config: SpeechSearchConfig): Resource[F, InvertedIndex[F]] =
     for {
       indexRef   <- Resource.eval(Ref[F].of(Map.empty[Term, PostingList]))
+      ttlMapRef  <- Resource.eval(Ref[F].of(Map.empty[Term, Int]))
       peerClient <- initPeerClient(config)
       ii = InvertedIndex.lazyDistributed(
              indexRef,
+              ttlMapRef,
              peerClient,
              config.index.distributionInterval,
-             config.index.distributionChunkSize
+             config.index.distributionChunkSize,
+             config.index.insertionTtl
            )
       _ <- Resource.eval(ii.run)
     } yield ii

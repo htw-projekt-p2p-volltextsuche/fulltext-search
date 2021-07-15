@@ -150,14 +150,18 @@ object InvertedIndex {
 
   def lazyDistributed[F[_]: Sync: Concurrent: Parallel: Sleep: Logger: Timer](
     indexRef: Ref[F, IndexMap],
+    ttlMapRef: Ref[F, Map[Term, Int]],
     peerClient: PeerClient[F],
     distributionInterval: FiniteDuration,
-    distributionChunkSize: Int
+    distributionChunkSize: Int,
+    insertionTtl: Int
   ) = new LazyDistributedInvertedIndex[F](
     indexRef,
+    ttlMapRef,
     peerClient,
     distributionInterval,
-    distributionChunkSize
+    distributionChunkSize,
+    insertionTtl
   )
 
 }

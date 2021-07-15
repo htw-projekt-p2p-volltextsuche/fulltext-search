@@ -61,7 +61,8 @@ case class Index(
   sampleSpeechesLocation: String = "sample_speeches.json",
   insertSampleSpeeches: Boolean = true,
   distributionInterval: FiniteDuration = 5.minutes,
-  distributionChunkSize: Int = 100
+  distributionChunkSize: Int = 100,
+  insertionTtl: Int = 5
 )
 
 case class Search(
