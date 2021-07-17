@@ -128,7 +128,7 @@ object SpeechSearchServer extends IOApp {
       peerClient <- initPeerClient(config)
       ii = InvertedIndex.lazyDistributed(
              indexRef,
-              ttlMapRef,
+             ttlMapRef,
              peerClient,
              config.index.distributionInterval,
              config.index.distributionChunkSize,

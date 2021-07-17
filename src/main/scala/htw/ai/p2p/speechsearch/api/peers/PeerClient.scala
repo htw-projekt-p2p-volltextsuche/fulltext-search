@@ -9,7 +9,6 @@ import htw.ai.p2p.speechsearch.domain.core.invertedindex.InvertedIndex._
 import io.chrisdavenport.log4cats.Logger
 import io.circe.generic.extras.Configuration
 import io.circe.generic.extras.auto._
-import io.circe.syntax.EncoderOps
 import org.http4s.Method._
 import org.http4s.Status.{NotFound, ServiceUnavailable}
 import org.http4s.circe.CirceEntityCodec._
